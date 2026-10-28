@@ -8,6 +8,8 @@ comptime {
     raddbg.typeView("array_list.Aligned(?)", "rows($, items, items.len, capacity)");
     raddbg.typeView(Vec3, "rows($, x, y, z)");
     raddbg.typeView(Vec3, "rows($, x, y, z)"); // duplicate, should dedupe
+
+    raddbg.entryPoint(@This(), "main");
 }
 
 pub fn main(init: std.process.Init) void {

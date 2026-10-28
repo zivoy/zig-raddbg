@@ -60,6 +60,16 @@ pub fn typeView(comptime T: anytype, comptime expr: []const u8) void {
     embed("type_view: {type: ```" ++ name ++ "```, expr: ```" ++ expr ++ "```}");
 }
 
+/// Entry point by declaration: `entryPoint(@This(), "main")`
+pub fn entryPoint(comptime ns: type, comptime decl: []const u8) void {
+    if (!@hasDecl(ns, decl)) @compileError(@typeName(ns) ++ " has no declaration '" ++ decl ++ "'");
+    entryPointName(@typeName(ns) ++ "." ++ decl);
+}
+
+pub fn entryPointName(comptime name: []const u8) void {
+    embed("entry_point: \"" ++ name ++ "\"");
+}
+
 // ---
 
 const testing = std.testing;
