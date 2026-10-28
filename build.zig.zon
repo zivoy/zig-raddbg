@@ -1,0 +1,15 @@
+.{
+    .name = .raddbg,
+
+    .version = "0.9.29",
+    .fingerprint = 0x2cfdade2422aa5a8,
+    .minimum_zig_version = "0.17.0",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "LICENSE",
+        "markup.zig",
+        "std_views.zig",
+    },
+}
