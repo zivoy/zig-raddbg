@@ -55,7 +55,8 @@ fn AsmData(comptime str: []const u8) type {
     };
 }
 
-pub fn typeView(comptime name: []const u8, comptime expr: []const u8) void {
+pub fn typeView(comptime T: anytype, comptime expr: []const u8) void {
+    const name: []const u8 = if (@TypeOf(T) == type) @typeName(T) else T;
     embed("type_view: {type: ```" ++ name ++ "```, expr: ```" ++ expr ++ "```}");
 }
 
