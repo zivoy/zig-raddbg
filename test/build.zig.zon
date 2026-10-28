@@ -1,0 +1,17 @@
+.{
+    .name = .test_markup,
+
+    .version = "0.0.0",
+    .fingerprint = 0xb1da54adbd094790,
+    .minimum_zig_version = "0.17.0",
+    .dependencies = .{
+        .raddbg = .{
+            .path = "../",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "test.zig",
+    },
+}
