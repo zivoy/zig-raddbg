@@ -10,7 +10,7 @@ pub fn build(b: *std.Build) void {
         .enabled = true,
     });
 
-    const exe = b.addExecutable(.{
+    const test_exe = b.addExecutable(.{
         .name = "test",
         .root_module = b.createModule(.{
             .root_source_file = b.path("test.zig"),
@@ -22,5 +22,19 @@ pub fn build(b: *std.Build) void {
         }),
         .use_llvm = true, // raddbg crashes with the zig backend https://github.com/EpicGames/raddebugger/issues/1006
     });
-    b.installArtifact(exe);
+    b.installArtifact(test_exe);
+
+    const types_exe = b.addExecutable(.{
+        .name = "types_test",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("types_test.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "raddbg", .module = raddbg_dep.module("raddbg") },
+            },
+        }),
+        .use_llvm = true,
+    });
+    b.installArtifact(types_exe);
 }
