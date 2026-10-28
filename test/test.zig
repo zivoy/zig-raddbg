@@ -9,7 +9,7 @@ comptime {
     raddbg.typeView(Vec3, "rows($, x, y, z)");
     raddbg.typeView(Vec3, "rows($, x, y, z)"); // duplicate, should dedupe
 
-    raddbg.entryPoint(@This(), "main");
+    raddbg.entryPoint("main");
 }
 
 pub fn main(init: std.process.Init) void {

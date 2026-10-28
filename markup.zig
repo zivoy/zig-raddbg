@@ -13,14 +13,8 @@ pub fn typeView(comptime T: anytype, comptime expr: []const u8) void {
     embed("type_view: {type: ```" ++ name ++ "```, expr: ```" ++ expr ++ "```}");
 }
 
-/// Entry point by declaration: `entryPoint(@This(), "main")`
-pub fn entryPoint(comptime ns: type, comptime decl: []const u8) void {
-    if (!@hasDecl(ns, decl)) @compileError(@typeName(ns) ++ " has no declaration '" ++ decl ++ "'");
-    entryPointName(@typeName(ns) ++ "." ++ decl);
-}
-
 /// Equivalent of `raddbg_entry_point(name)`: tells the debugger which symbol to treat as the program's entry point
-pub fn entryPointName(comptime name: []const u8) void {
+pub fn entryPoint(comptime name: []const u8) void {
     embed("entry_point: \"" ++ name ++ "\"");
 }
 
