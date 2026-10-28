@@ -64,6 +64,10 @@ pub fn main(init: std.process.Init) !void {
     var err_bad: MyError!u32 = MyError.OutOfBounds;
     var err_any: anyerror = error.Nope;
     var opt_err: ?MyError!u8 = null;
+    var opt_slice: ?[]const u8 = "hi";
+    var opt_slice_null: ?[]const u8 = null;
+    var err_slice: MyError![]const u8 = "ok";
+    var opt_vec: ?[]Vec3 = null;
 
     // enums
     var e1: Color = .green;
@@ -213,22 +217,7 @@ pub fn main(init: std.process.Init) !void {
 
     @breakpoint();
 
-    std.mem.doNotOptimizeAway(.{ &opt_some, &opt_none, &err_ok, &err_bad, &opt_err, &vec, &pk, &leaf, &root, &un_bare, &un_tag_none, &un_tag_text, &un_tag_vec, &un_ext, &un_pk, &tuple, &tuple_u8, &tuple_f32, &arr_ints, &arr_sentinel, &arr_empty, &arr_2d, &arr_vecs, &arr_big, &arr_str, &vec4, &vec_bool });
-
-    std.mem.doNotOptimizeAway(.{ &zero_bits, &odd_width, &i8v, &u8v, &i32v, &u64v, &i128v, &usizev, &f16v, &f32v, &f64v, &f80v, &f128v, &bv, &vd, &cint, &cchar, &opt_ptr, &opt_ptr_null, &err_any, &e1, &e2, &e3, &ex, &p_const, &p_pp, &p_vec, &p_any, &p_opaque, &p_fn, &many, &many_sent, &c_ptr, &c_ptr_null, &sl, &sl_mut, &sl_sent, &sl_empty, &sl_vec, &sl_of_sl, &text, &vec_int, &version, &allocator });
-
-    std.mem.doNotOptimizeAway(.{
-        zero_bits,    odd_width,   i8v,      u8v,         i32v,          u64v,            i128v,      usizev,        f16v,        f32v,
-        f64v,         f80v,        f128v,    bv,          vd,            cint,            cchar,      opt_some,      opt_none,    opt_ptr,
-        opt_ptr_null, err_ok,      err_bad,  err_any,     opt_err,       e1,              e2,         e3,            vec,         pk,
-        ex,           root,        un_bare,  un_tag_none, un_tag_text,   un_tag_vec,      un_ext,     un_pk,         tuple,       p_one,
-        p_const,      p_pp,        p_vec,    p_any,       p_opaque,      p_fn,            arr_ints,   arr_sentinel,  arr_empty,   arr_2d,
-        arr_vecs,     arr_big,     arr_str,  many,        many_sent,     c_ptr,           c_ptr_null, sl,            sl_mut,      sl_sent,
-        sl_empty,     sl_vec,      sl_of_sl, text,        vec4,          vec_int,         vec_bool,   &al,           &al_empty,   &al_vec,
-        &al_aligned,  &al_managed, &pq,      &pdq,        &dq,           &hm,             &shm,       &hm_unmanaged, &ahm,        &sahm,
-        &buf_map,     &buf_set,    &bs_int,  &bs_arr,     &bs_dyn,       &bs_dyn_managed, &enum_set,  &enum_map,     &enum_array, &mal,
-        &sll,         &dll,        &writer,  &reader,     &alloc_writer, &prng,           version,    allocator,
-    });
+    std.mem.doNotOptimizeAway(.{ &opt_some, &opt_none, &err_ok, &err_bad, &opt_err, &vec, &pk, &leaf, &root, &un_bare, &un_tag_none, &un_tag_text, &un_tag_vec, &un_ext, &un_pk, &tuple, &tuple_u8, &tuple_f32, &arr_ints, &arr_sentinel, &arr_empty, &arr_2d, &arr_vecs, &arr_big, &arr_str, &vec4, &vec_bool, &zero_bits, &odd_width, &i8v, &u8v, &i32v, &u64v, &i128v, &usizev, &f16v, &f32v, &f64v, &f80v, &f128v, &bv, &vd, &cint, &cchar, &opt_ptr, &opt_ptr_null, &err_any, &e1, &e2, &e3, &ex, &p_const, &p_pp, &p_vec, &p_any, &p_opaque, &p_fn, &many, &many_sent, &c_ptr, &c_ptr_null, &sl, &sl_mut, &sl_sent, &sl_empty, &sl_vec, &sl_of_sl, &text, &vec_int, &version, &allocator, zero_bits, odd_width, i8v, u8v, i32v, u64v, i128v, usizev, f16v, f32v, f64v, f80v, f128v, bv, vd, cint, cchar, opt_some, opt_none, opt_ptr, opt_ptr_null, err_ok, err_bad, err_any, opt_err, e1, e2, e3, vec, pk, ex, root, un_bare, un_tag_none, un_tag_text, un_tag_vec, un_ext, un_pk, tuple, p_one, p_const, p_pp, p_vec, p_any, p_opaque, p_fn, arr_ints, arr_sentinel, arr_empty, arr_2d, arr_vecs, arr_big, arr_str, many, many_sent, c_ptr, c_ptr_null, sl, sl_mut, sl_sent, sl_empty, sl_vec, sl_of_sl, text, vec4, vec_int, vec_bool, &al, &al_empty, &al_vec, &al_aligned, &al_managed, &pq, &pdq, &dq, &hm, &shm, &hm_unmanaged, &ahm, &sahm, &buf_map, &buf_set, &bs_int, &bs_arr, &bs_dyn, &bs_dyn_managed, &enum_set, &enum_map, &enum_array, &mal, &sll, &dll, &writer, &reader, &alloc_writer, &prng, version, allocator, &opt_slice, &opt_slice_null, &err_slice, &opt_vec });
 
     std.debug.print("done: {s}\n", .{text});
 }
