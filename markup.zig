@@ -6,6 +6,26 @@ pub const std_views = @import("std_views.zig");
 
 pub const enabled = options.enabled;
 
+/// Equivalent of `raddbg_type_view(type, expr)`: tells the debugger how to visualize a type.
+/// `T` can be a zig type or a string pattern
+pub fn typeView(comptime T: anytype, comptime expr: []const u8) void {
+    const name: []const u8 = if (@TypeOf(T) == type) @typeName(T) else T;
+    embed("type_view: {type: ```" ++ name ++ "```, expr: ```" ++ expr ++ "```}");
+}
+
+/// Entry point by declaration: `entryPoint(@This(), "main")`
+pub fn entryPoint(comptime ns: type, comptime decl: []const u8) void {
+    if (!@hasDecl(ns, decl)) @compileError(@typeName(ns) ++ " has no declaration '" ++ decl ++ "'");
+    entryPointName(@typeName(ns) ++ "." ++ decl);
+}
+
+/// Equivalent of `raddbg_entry_point(name)`: tells the debugger which symbol to treat as the program's entry point
+pub fn entryPointName(comptime name: []const u8) void {
+    embed("entry_point: \"" ++ name ++ "\"");
+}
+
+// ---
+
 const section = ".raddbg";
 
 fn embed(comptime str: []const u8) void {
@@ -53,21 +73,6 @@ fn AsmData(comptime str: []const u8) type {
                 , .{ section, directives }));
         }
     };
-}
-
-pub fn typeView(comptime T: anytype, comptime expr: []const u8) void {
-    const name: []const u8 = if (@TypeOf(T) == type) @typeName(T) else T;
-    embed("type_view: {type: ```" ++ name ++ "```, expr: ```" ++ expr ++ "```}");
-}
-
-/// Entry point by declaration: `entryPoint(@This(), "main")`
-pub fn entryPoint(comptime ns: type, comptime decl: []const u8) void {
-    if (!@hasDecl(ns, decl)) @compileError(@typeName(ns) ++ " has no declaration '" ++ decl ++ "'");
-    entryPointName(@typeName(ns) ++ "." ++ decl);
-}
-
-pub fn entryPointName(comptime name: []const u8) void {
-    embed("entry_point: \"" ++ name ++ "\"");
 }
 
 // ---
