@@ -24,7 +24,17 @@ pub fn entryPoint(comptime name: []const u8) void {
 
 // ---
 
+/// Equivalent of `raddbg_is_attached()`: true once the debugger has attached
+pub fn isAttached() bool {
+    if (!enabled) return false;
+    // volatile: the debugger writes the byte from outside, so the read must not be folded to 0
+    return @as(*const volatile u8, &Marker.byte[0]).* != 0;
+}
+
+// ---
+
 const section = ".raddbg";
+const is_attached_section = ".rdbgia";
 
 fn embed(comptime str: []const u8) void {
     if (!enabled) return;
@@ -71,6 +81,19 @@ fn AsmData(comptime str: []const u8) type {
                 , .{ section, directives }));
         }
     };
+}
+
+// --- is attached ---
+// The debugger finds the `.rdbgia` section in the loaded image and writes a non-zero value into it when it attaches.
+
+const Marker = struct {
+    var byte: [1]u8 linksection(is_attached_section) = .{0};
+};
+
+comptime {
+    if (enabled) {
+        @export(&Marker.byte, .{ .name = "raddbg_is_attached_byte_marker" });
+    }
 }
 
 // ---

@@ -1,9 +1,6 @@
 const std = @import("std");
 const raddbg = @import("raddbg");
 
-// turn to true to disable typing
-pub const raddbg_markup_stubs = false;
-
 comptime {
     raddbg.std_views.registerDefaults();
     raddbg.entryPoint("add");
