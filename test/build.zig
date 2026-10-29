@@ -1,4 +1,5 @@
 const std = @import("std");
+const raddbg = @import("raddbg");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -37,4 +38,8 @@ pub fn build(b: *std.Build) void {
         .use_llvm = true,
     });
     b.installArtifact(types_exe);
+
+    const debug_step = b.step("debug", "Run program in debugger");
+    const debug_run = raddbg.debugProgram(b, test_exe);
+    debug_step.dependOn(&debug_run.step);
 }

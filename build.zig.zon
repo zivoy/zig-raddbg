@@ -11,5 +11,6 @@
         "LICENSE",
         "markup.zig",
         "std_views.zig",
+        "raddbg_project.zig",
     },
 }

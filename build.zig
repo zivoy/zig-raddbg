@@ -35,3 +35,37 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_mod_tests.step);
     test_step.dependOn(&run_mod_tests_llvm.step);
 }
+
+pub fn makeRaddbgProject(b: *std.Build, debuggedProgram: *std.Build.Step.Compile, projectFile: std.Build.LazyPath) *std.Build.Step.Run {
+    const exe = b.addExecutable(.{
+        .name = "raddbg_project",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("raddbg_project.zig"),
+            .target = b.graph.host,
+            .optimize = .safe,
+        }),
+    });
+
+    const markup = b.addObjCopy(debuggedProgram.getEmittedBin(), .{ .format = .binary, .only_section = ".raddbg" });
+
+    const run = b.addRunArtifact(exe);
+    run.addFileArg(markup.getOutput());
+    run.addFileArg(projectFile);
+    run.has_side_effects = true;
+
+    return run;
+}
+
+pub fn debugProgram(b: *std.Build, program: *std.Build.Step.Compile) *std.Build.Step.Run {
+    var project: ?std.Build.LazyPath = null;
+    if (b.graph.host.result.os.tag == .linux) {
+        project = program.getEmittedBinDirectory().path(b, b.fmt("{s}.raddbg_project", .{program.name}));
+        _ = makeRaddbgProject(b, program, project.?);
+    }
+
+    const run_debugger = b.addSystemCommand(&.{"raddbg"});
+    if (project != null) run_debugger.addFileArg2(project.?, .{ .prefix = "--project:" });
+    run_debugger.addFileArg2(program.getEmittedBin(), .{});
+
+    return run_debugger;
+}
