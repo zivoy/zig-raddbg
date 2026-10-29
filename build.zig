@@ -23,9 +23,15 @@ pub fn build(b: *std.Build) void {
     const mod_tests = b.addTest(.{
         .root_module = mod,
     });
+    const mod_tests_llvm = b.addTest(.{
+        .root_module = mod,
+        .use_llvm = true,
+    });
 
     const run_mod_tests = b.addRunArtifact(mod_tests);
+    const run_mod_tests_llvm = b.addRunArtifact(mod_tests_llvm);
 
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_mod_tests.step);
+    test_step.dependOn(&run_mod_tests_llvm.step);
 }

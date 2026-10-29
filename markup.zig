@@ -13,13 +13,21 @@ pub const enabled = markup_enabled and options.enabled;
 /// Equivalent of `raddbg_type_view(type, expr)`: tells the debugger how to visualize a type.
 /// `T` can be a zig type or a string pattern
 pub fn typeView(comptime T: anytype, comptime expr: []const u8) void {
+    embed(typeViewText(T, expr));
+}
+
+fn typeViewText(comptime T: anytype, comptime expr: []const u8) []const u8 {
     const name: []const u8 = if (@TypeOf(T) == type) @typeName(T) else T;
-    embed("type_view: {type: ```" ++ name ++ "```, expr: ```" ++ expr ++ "```}");
+    return "type_view: {type: ```" ++ name ++ "```, expr: ```" ++ expr ++ "```}";
 }
 
 /// Equivalent of `raddbg_entry_point(name)`: tells the debugger which symbol to treat as the program's entry point
 pub fn entryPoint(comptime name: []const u8) void {
-    embed("entry_point: \"" ++ name ++ "\"");
+    embed(entryPointText(name));
+}
+
+fn entryPointText(comptime name: []const u8) []const u8 {
+    return "entry_point: \"" ++ name ++ "\"";
 }
 
 // ---
@@ -232,7 +240,11 @@ fn tracedByDebugger() bool {
 
     var buffer: [512]u8 = undefined;
     const status = std.Io.Dir.cwd().readFile(io, "/proc/self/status", &buffer) catch return false;
+    return hasTracer(status);
+}
 
+/// `status` is the contents of `/proc/PID/status`
+fn hasTracer(status: []const u8) bool {
     const key = "TracerPid:";
     const start = std.mem.indexOf(u8, status, key) orelse return false;
     const value = std.mem.trim(u8, status[start + key.len ..], " \t");
@@ -243,6 +255,35 @@ fn tracedByDebugger() bool {
 
 const testing = std.testing;
 
-test "yes" {
-    try testing.expect(true);
+test "text matches what the C macros write" {
+    // raddbg_type_view and raddbg_entry_point in raddbg_markup.h
+    try testing.expectEqualStrings("type_view: {type: ```[]u8```, expr: ```array(ptr, len)```}", typeViewText("[]u8", "array(ptr, len)"));
+    try testing.expectEqualStrings("type_view: {type: ```u32```, expr: ```x```}", typeViewText(u32, "x"));
+    try testing.expectEqualStrings("entry_point: \"main\"", entryPointText("main"));
+}
+
+test "hasTracer reads TracerPid" {
+    try testing.expect(!hasTracer("Name:\tt\nTracerPid:\t0\nUid:\t1000\n"));
+    try testing.expect(hasTracer("Name:\tt\nTracerPid:\t4242\nUid:\t1000\n"));
+    try testing.expect(!hasTracer("Name:\tt\nUid:\t1000\n"));
+    try testing.expect(!hasTracer("TracerPid:"));
+    try testing.expect(!hasTracer(""));
+}
+
+test "isAttached reads the marker byte" {
+    if (!enabled) return error.SkipZigTest;
+    // what the debugger does when it attaches
+    const byte: *volatile u8 = &Marker.byte[0];
+    byte.* = 1;
+    defer byte.* = 0;
+    try testing.expect(isAttached());
+}
+
+test "disabled markup does nothing" {
+    if (enabled) return error.SkipZigTest;
+    try testing.expect(!isAttached());
+}
+
+test "default views compile" {
+    comptime std_views.registerDefaults();
 }
