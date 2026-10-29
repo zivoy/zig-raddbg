@@ -115,9 +115,9 @@ pub fn pin(comptime expr: []const u8, args: anytype) void {
 
 /// Equivalent of `raddbg_log(fmt, ...)`: writes to the debugger's log
 pub fn log(comptime fmt: []const u8, args: anytype) void {
-    _ = fmt; // autofix
-    _ = args; // autofix
-    @panic("TODO: raddbg log");
+    if (!enabled) return;
+    if (builtin.os.tag == .windows) @panic("TODO: need OutputDebugStringA");
+    std.log.scoped(.raddbg).info(fmt, args);
 }
 
 /// Which accesses of an address range stop the debugger. Used by `addBreakpoint` and `removeBreakpoint`.
