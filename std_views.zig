@@ -7,6 +7,7 @@ pub fn registerDefaults() void {
     misc();
     queues();
     hashMaps();
+    bitSets();
 }
 
 pub fn slices() void {
@@ -51,4 +52,11 @@ fn hashMapView(comptime prefix: []const u8) []const u8 {
     const capacity = live ++ " * 5 / 4 + 1";
     return "rows($, count = " ++ prefix ++ "size, available = " ++ prefix ++ "available, capacity = " ++ capacity ++
         ", slots = array(" ++ prefix ++ "metadata, " ++ capacity ++ "))";
+}
+
+pub fn bitSets() void {
+    raddbg.typeView("bit_set.Integer(?)", "bin(bits)");
+    raddbg.typeView("bit_set.Array(?)", "bin(masks)");
+    raddbg.typeView(std.bit_set.Dynamic, "rows($, bit_length, bin(array(masks, (bit_length + 63) / 64)))");
+    raddbg.typeView(std.bit_set.DynamicManaged, "unmanaged");
 }
