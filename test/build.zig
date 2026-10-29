@@ -42,4 +42,8 @@ pub fn build(b: *std.Build) void {
     const debug_step = b.step("debug", "Run program in debugger");
     const debug_run = raddbg.debugProgram(b, test_exe);
     debug_step.dependOn(&debug_run.step);
+
+    const debug_types_step = b.step("debug-types", "Run type test in debugger");
+    const debug_types_run = raddbg.debugProgram(b, types_exe);
+    debug_types_step.dependOn(&debug_types_run.step);
 }
