@@ -40,11 +40,11 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(types_exe);
 
     const debug_step = b.step("debug", "Run program in debugger");
-    const debug_run = raddbg.debugProgram(b, raddbg_dep, test_exe);
+    const debug_run = raddbg.debugProgram(b, raddbg_dep, test_exe, b.path("./test.raddbg_project"));
     debug_step.dependOn(&debug_run.step);
 
     const debug_types_step = b.step("debug-types", "Run type test in debugger");
-    const debug_types_run = raddbg.debugProgram(b, raddbg_dep, types_exe);
+    const debug_types_run = raddbg.debugProgram(b, raddbg_dep, types_exe, null);
     debug_types_run.addArg("--auto_run");
     debug_types_step.dependOn(&debug_types_run.step);
 }

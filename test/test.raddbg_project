@@ -1,0 +1,20 @@
+// raddbg 0.9.30 project file
+
+raddbg_markup: begin
+entry_point: main
+type_view:
+{
+  type: "test.Vec3"
+  expr: "rows($, x, y, z)"
+}
+type_view:
+{
+  type: "array_list.Aligned(?)"
+  expr: "rows($, items, items.len, capacity)"
+}
+type_view:
+{
+  type: "[]?"
+  expr: "array(ptr, len)"
+}
+raddbg_markup: end
