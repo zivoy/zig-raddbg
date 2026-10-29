@@ -61,7 +61,8 @@ pub fn makeRaddbgProject(b: *std.Build, raddbg_project: *std.Build, debugged_pro
 pub fn debugProgram(b: *std.Build, raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile) *std.Build.Step.Run {
     const run_debugger = b.addSystemCommand(&.{"raddbg"});
 
-    if (b.graph.host.result.os.tag == .linux) {
+    const target = if (program.root_module.resolved_target != null) program.root_module.resolved_target.? else b.graph.host;
+    if (target.result.os.tag == .linux) {
         const project = program.getEmittedBinDirectory().path(b, b.fmt("{s}.raddbg_project", .{program.name}));
         const build_proj = makeRaddbgProject(b, raddbg_dep.builder, program, project);
         run_debugger.step.dependOn(&build_proj.step);
