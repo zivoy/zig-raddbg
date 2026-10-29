@@ -36,7 +36,7 @@ pub fn isAttached() bool {
 
 /// Equivalent of `raddbg_thread_id()`: the id the debugger knows the calling thread by
 pub fn threadId() std.Thread.Id {
-    @panic("TODO: raddbg threadId");
+    return std.Thread.getCurrentId();
 }
 
 /// Equivalent of `raddbg_thread_name(fmt, ...)`: names the calling thread in the debugger
