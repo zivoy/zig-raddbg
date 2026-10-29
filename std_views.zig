@@ -50,14 +50,6 @@ pub fn hashMaps() void {
     raddbg.typeView(std.BufSet, hashMapView("hash_map.unmanaged."));
 }
 
-// capacity is a power of two and `available` = floor(capacity * 80 / 100) - size, so (size + available) * 5 / 4 + 1 recovers it (default max load of 80%)
-fn hashMapView(comptime prefix: []const u8) []const u8 {
-    const live = "(" ++ prefix ++ "size + " ++ prefix ++ "available)";
-    const capacity = live ++ " * 5 / 4 + 1";
-    return "rows($, count = " ++ prefix ++ "size, available = " ++ prefix ++ "available, capacity = " ++ capacity ++
-        ", slots = array(" ++ prefix ++ "metadata, " ++ capacity ++ "))";
-}
-
 pub fn bitSets() void {
     raddbg.typeView("bit_set.Integer(?)", "bin(bits)");
     raddbg.typeView("bit_set.Array(?)", "bin(masks)");
@@ -85,6 +77,34 @@ pub fn multiArrayListOf(comptime T: type) void {
     raddbg.typeView(std.MultiArrayList(T), "rows($, len, capacity, bytes" ++ rows ++ ")");
 }
 
+pub fn linkedLists() void {
+    raddbg.typeView(std.SinglyLinkedList, "list(first, next)");
+    raddbg.typeView(std.DoublyLinkedList, "list(first, next)");
+}
+
+pub fn io() void {
+    raddbg.typeView(std.Io.Writer, "array(buffer.ptr, end)");
+    raddbg.typeView(std.Io.Reader, "array(buffer.ptr + seek, end - seek)");
+    raddbg.typeView(std.Io.Writer.Allocating, "writer");
+}
+
+pub fn errors() void {
+    raddbg.typeView("error{?}!?", "rows($, error, payload)");
+    raddbg.typeView("anyerror!?", "rows($, error, payload)");
+}
+
+// cant really register optional, since `?` is the wildcard, but it should be fine, a `?T` is just struct that has `{ payload, some }` and a `?[]T` is an array that can have its ptr be 0
+
+// ---
+
+// capacity is a power of two and `available` = floor(capacity * 80 / 100) - size, so (size + available) * 5 / 4 + 1 recovers it (default max load of 80%)
+fn hashMapView(comptime prefix: []const u8) []const u8 {
+    const live = "(" ++ prefix ++ "size + " ++ prefix ++ "available)";
+    const capacity = live ++ " * 5 / 4 + 1";
+    return "rows($, count = " ++ prefix ++ "size, available = " ++ prefix ++ "available, capacity = " ++ capacity ++
+        ", slots = array(" ++ prefix ++ "metadata, " ++ capacity ++ "))";
+}
+
 const Column = struct { field: usize, offset: usize };
 
 fn columnLayout(comptime T: type) [@typeInfo(T).@"struct".field_names.len]Column {
@@ -109,21 +129,3 @@ fn columnLayout(comptime T: type) [@typeInfo(T).@"struct".field_names.len]Column
     }
     return layout;
 }
-
-pub fn linkedLists() void {
-    raddbg.typeView(std.SinglyLinkedList, "list(first, next)");
-    raddbg.typeView(std.DoublyLinkedList, "list(first, next)");
-}
-
-pub fn io() void {
-    raddbg.typeView(std.Io.Writer, "array(buffer.ptr, end)");
-    raddbg.typeView(std.Io.Reader, "array(buffer.ptr + seek, end - seek)");
-    raddbg.typeView(std.Io.Writer.Allocating, "writer");
-}
-
-pub fn errors() void {
-    raddbg.typeView("error{?}!?", "rows($, error, payload)");
-    raddbg.typeView("anyerror!?", "rows($, error, payload)");
-}
-
-// cant really register optional, since `?` is the wildcard, but it should be fine, a `?T` is just struct that has `{ payload, some }` and a `?[]T` is an array that can have its ptr be 0
