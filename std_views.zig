@@ -6,6 +6,7 @@ pub fn registerDefaults() void {
     arrayLists();
     misc();
     queues();
+    hashMaps();
 }
 
 pub fn slices() void {
@@ -33,4 +34,21 @@ pub fn queues() void {
         "wrapped = array(buffer.ptr, len - " ++ deque_front ++ "), " ++
         "head, len)";
     raddbg.typeView("deque.Deque(?)", deque_view);
+}
+
+pub fn hashMaps() void {
+    raddbg.typeView("array_hash_map.Custom(?)", "rows($, count = entries.len, capacity = entries.capacity, index_header, storage = array(entries.bytes,entries.len))");
+
+    raddbg.typeView("hash_map.Custom(?,80)", hashMapView(""));
+    raddbg.typeView("hash_map.HashMap(?,80)", hashMapView("unmanaged."));
+    raddbg.typeView("buf_map.BufMap", hashMapView("hash_map.unmanaged."));
+    raddbg.typeView("buf_set.BufSet", hashMapView("hash_map.unmanaged."));
+}
+
+// capacity is a power of two and `available` = floor(capacity * 80 / 100) - size, so (size + available) * 5 / 4 + 1 recovers it (default max load of 80%)
+fn hashMapView(comptime prefix: []const u8) []const u8 {
+    const live = "(" ++ prefix ++ "size + " ++ prefix ++ "available)";
+    const capacity = live ++ " * 5 / 4 + 1";
+    return "rows($, count = " ++ prefix ++ "size, available = " ++ prefix ++ "available, capacity = " ++ capacity ++
+        ", slots = array(" ++ prefix ++ "metadata, " ++ capacity ++ "))";
 }
