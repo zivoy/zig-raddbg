@@ -18,6 +18,8 @@ pub fn build(b: *std.Build) void {
         },
     });
 
+    _ = b.addModule("raddbg_project", .{});
+
     // ---
 
     const mod_tests = b.addTest(.{
@@ -36,35 +38,37 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_mod_tests_llvm.step);
 }
 
-pub fn makeRaddbgProject(b: *std.Build, debuggedProgram: *std.Build.Step.Compile, projectFile: std.Build.LazyPath) *std.Build.Step.Run {
-    const exe = b.addExecutable(.{
+pub fn makeRaddbgProject(b: *std.Build, raddbg_project: *std.Build, debugged_program: *std.Build.Step.Compile, project_file: std.Build.LazyPath) *std.Build.Step.Run {
+    const exe = raddbg_project.addExecutable(.{
         .name = "raddbg_project",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("raddbg_project.zig"),
+        .root_module = raddbg_project.createModule(.{
+            .root_source_file = raddbg_project.path("raddbg_project.zig"),
             .target = b.graph.host,
             .optimize = .safe,
         }),
     });
 
-    const markup = b.addObjCopy(debuggedProgram.getEmittedBin(), .{ .format = .binary, .only_section = ".raddbg" });
+    const markup = raddbg_project.addObjCopy(debugged_program.getEmittedBin(), .{ .format = .binary, .only_section = ".raddbg" });
 
     const run = b.addRunArtifact(exe);
     run.addFileArg(markup.getOutput());
-    run.addFileArg(projectFile);
+    run.addFileArg(project_file);
     run.has_side_effects = true;
 
     return run;
 }
 
-pub fn debugProgram(b: *std.Build, program: *std.Build.Step.Compile) *std.Build.Step.Run {
-    var project: ?std.Build.LazyPath = null;
+pub fn debugProgram(b: *std.Build, raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile) *std.Build.Step.Run {
+    const run_debugger = b.addSystemCommand(&.{"raddbg"});
+
     if (b.graph.host.result.os.tag == .linux) {
-        project = program.getEmittedBinDirectory().path(b, b.fmt("{s}.raddbg_project", .{program.name}));
-        _ = makeRaddbgProject(b, program, project.?);
+        const project = program.getEmittedBinDirectory().path(b, b.fmt("{s}.raddbg_project", .{program.name}));
+        const build_proj = makeRaddbgProject(b, raddbg_dep.builder, program, project);
+        run_debugger.step.dependOn(&build_proj.step);
+
+        run_debugger.addFileArg2(project, .{ .prefix = "--project:" });
     }
 
-    const run_debugger = b.addSystemCommand(&.{"raddbg"});
-    if (project != null) run_debugger.addFileArg2(project.?, .{ .prefix = "--project:" });
     run_debugger.addFileArg2(program.getEmittedBin(), .{});
 
     return run_debugger;
