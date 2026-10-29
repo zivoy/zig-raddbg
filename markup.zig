@@ -98,17 +98,18 @@ pub inline fn breakpointIf(condition: bool) void {
 }
 
 /// Equivalent of `raddbg_watch(fmt, ...)`: adds an expression to the debug
-/// Does nothing in the C header either (marked TODO there).
 pub fn watch(comptime fmt: []const u8, args: anytype) void {
-    _ = fmt; // autofix
-    _ = args; // autofix
+    // Does nothing in the C header (marked TODO)
+    _ = fmt;
+    _ = args;
     @panic("TODO: raddbg watch");
 }
 
 /// Equivalent of `raddbg_pin(expr, ...)`: the debugger shows `expr` next to this line of source.
 pub fn pin(comptime expr: []const u8, args: anytype) void {
-    _ = expr; // autofix
-    _ = args; // autofix
+    // Does nothing in the C header (marked TODO)
+    _ = expr;
+    _ = args;
     @panic("TODO: raddbg pin");
 }
 
