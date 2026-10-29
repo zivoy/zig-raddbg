@@ -120,7 +120,8 @@ pub fn log(comptime fmt: []const u8, args: anytype) void {
     std.log.scoped(.raddbg).info(fmt, args);
 }
 
-/// Which accesses of an address range stop the debugger. Used by `addBreakpoint` and `removeBreakpoint`.
+/// Which accesses of an address range stop the debugger.
+/// Used by `addBreakpoint` and `removeBreakpoint`.
 pub const Access = packed struct {
     read: bool = false,
     write: bool = false,
@@ -129,25 +130,35 @@ pub const Access = packed struct {
 
 /// Equivalent of `raddbg_add_breakpoint(ptr, size, r, w, x)`: breaks on the given accesses of `size` bytes at `ptr`
 pub fn addBreakpoint(ptr: *const anyopaque, size: usize, access: Access) void {
-    _ = .{ ptr, size, access };
+    _ = ptr; // autofix
+    _ = size; // autofix
+    _ = access; // autofix
     @panic("TODO: raddbg addBreakpoint");
 }
 
 /// Equivalent of `raddbg_remove_breakpoint(ptr, size, r, w, x)`: removes a breakpoint made with `addBreakpoint`
 pub fn removeBreakpoint(ptr: *const anyopaque, size: usize, access: Access) void {
-    _ = .{ ptr, size, access };
+    _ = ptr; // autofix
+    _ = size; // autofix
+    _ = access; // autofix
     @panic("TODO: raddbg removeBreakpoint");
 }
 
 /// Equivalent of `raddbg_annotate_vaddr_range(ptr, size, fmt, ...)`: labels `size` bytes at `ptr` in the debugger
 pub fn annotateVaddrRange(ptr: *const anyopaque, size: usize, comptime fmt: []const u8, args: anytype) void {
-    _ = .{ ptr, size, fmt, args };
+    _ = ptr; // autofix
+    _ = size; // autofix
+    _ = fmt; // autofix
+    _ = args; // autofix
     @panic("TODO: raddbg annotateVaddrRange");
 }
 
 /// Equivalent of `raddbg_load_module(ptr, size, name, dbg_path)`: tells the debugger a module is loaded at `ptr`, with its debug info at `dbg_path`
 pub fn loadModule(ptr: *const anyopaque, size: usize, name: [*:0]const u8, dbg_path: [*:0]const u8) void {
-    _ = .{ ptr, size, name, dbg_path };
+    _ = ptr; // autofix
+    _ = size; // autofix
+    _ = name; // autofix
+    _ = dbg_path; // autofix
     @panic("TODO: raddbg loadModule");
 }
 
