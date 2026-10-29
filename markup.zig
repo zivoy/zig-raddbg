@@ -34,6 +34,122 @@ pub fn isAttached() bool {
     return false;
 }
 
+/// Equivalent of `raddbg_thread_id()`: the id the debugger knows the calling thread by
+pub fn threadId() std.Thread.Id {
+    @panic("TODO: raddbg threadId");
+}
+
+/// Equivalent of `raddbg_thread_name(fmt, ...)`: names the calling thread in the debugger
+pub fn threadName(comptime fmt: []const u8, args: anytype) void {
+    _ = fmt; // autofix
+    _ = args; // autofix
+    @panic("TODO: raddbg threadName");
+}
+
+/// Equivalent of `raddbg_thread_id_name(id, fmt, ...)`: names the thread with the given id in the debugger
+pub fn threadIdName(id: std.Thread.Id, comptime fmt: []const u8, args: anytype) void {
+    _ = id; // autofix
+    _ = fmt; // autofix
+    _ = args; // autofix
+    @panic("TODO: raddbg threadIdName");
+}
+
+/// Equivalent of `raddbg_thread_color_u32(u32)`: colours the calling thread in the debugger, `0xRRGGBBAA`
+pub fn threadColorU32(rgba: u32) void {
+    _ = rgba; // autofix
+    @panic("TODO: raddbg threadColorU32");
+}
+
+/// Equivalent of `raddbg_thread_color_rgba(r, g, b, a)`: colours the calling thread in the debugger, each channel is 0 to 1
+pub fn threadColorRgba(r: f32, g: f32, b: f32, a: f32) void {
+    _ = r; // autofix
+    _ = g; // autofix
+    _ = b; // autofix
+    _ = a; // autofix
+    @panic("TODO: raddbg threadColorRgba");
+}
+
+/// Equivalent of `raddbg_thread_id_color_u32(id, u32)`: colours the thread with the given id in the debugger, `0xRRGGBBAA`
+pub fn threadIdColorU32(id: std.Thread.Id, rgba: u32) void {
+    _ = id; // autofix
+    _ = rgba; // autofix
+    @panic("TODO: raddbg threadIdColorU32");
+}
+
+/// Equivalent of `raddbg_thread_id_color_rgba(id, r, g, b, a)`: colours the thread with the given id in the debugger, each channel is 0 to 1
+pub fn threadIdColorRgba(id: std.Thread.Id, r: f32, g: f32, b: f32, a: f32) void {
+    _ = id; // autofix
+    _ = r; // autofix
+    _ = g; // autofix
+    _ = b; // autofix
+    _ = a; // autofix
+    @panic("TODO: raddbg threadIdColorRgba");
+}
+
+/// Equivalent of `raddbg_break()`: stops in the debugger at this point
+pub fn breakpoint() void {
+    @panic("TODO: raddbg debugBreak");
+}
+
+/// Equivalent of `raddbg_break_if(expr)`: stops in the debugger at this point if `condition` is true
+pub fn breakpointIf(condition: bool) void {
+    _ = condition; // autofix
+    @panic("TODO: raddbg debugBreakIf");
+}
+
+/// Equivalent of `raddbg_watch(fmt, ...)`: adds an expression to the debug
+/// Does nothing in the C header either (marked TODO there).
+pub fn watch(comptime fmt: []const u8, args: anytype) void {
+    _ = fmt; // autofix
+    _ = args; // autofix
+    @panic("TODO: raddbg watch");
+}
+
+/// Equivalent of `raddbg_pin(expr, ...)`: the debugger shows `expr` next to this line of source.
+pub fn pin(comptime expr: []const u8, args: anytype) void {
+    _ = expr; // autofix
+    _ = args; // autofix
+    @panic("TODO: raddbg pin");
+}
+
+/// Equivalent of `raddbg_log(fmt, ...)`: writes to the debugger's log
+pub fn log(comptime fmt: []const u8, args: anytype) void {
+    _ = fmt; // autofix
+    _ = args; // autofix
+    @panic("TODO: raddbg log");
+}
+
+/// Which accesses of an address range stop the debugger. Used by `addBreakpoint` and `removeBreakpoint`.
+pub const Access = packed struct {
+    read: bool = false,
+    write: bool = false,
+    execute: bool = false,
+};
+
+/// Equivalent of `raddbg_add_breakpoint(ptr, size, r, w, x)`: breaks on the given accesses of `size` bytes at `ptr`
+pub fn addBreakpoint(ptr: *const anyopaque, size: usize, access: Access) void {
+    _ = .{ ptr, size, access };
+    @panic("TODO: raddbg addBreakpoint");
+}
+
+/// Equivalent of `raddbg_remove_breakpoint(ptr, size, r, w, x)`: removes a breakpoint made with `addBreakpoint`
+pub fn removeBreakpoint(ptr: *const anyopaque, size: usize, access: Access) void {
+    _ = .{ ptr, size, access };
+    @panic("TODO: raddbg removeBreakpoint");
+}
+
+/// Equivalent of `raddbg_annotate_vaddr_range(ptr, size, fmt, ...)`: labels `size` bytes at `ptr` in the debugger
+pub fn annotateVaddrRange(ptr: *const anyopaque, size: usize, comptime fmt: []const u8, args: anytype) void {
+    _ = .{ ptr, size, fmt, args };
+    @panic("TODO: raddbg annotateVaddrRange");
+}
+
+/// Equivalent of `raddbg_load_module(ptr, size, name, dbg_path)`: tells the debugger a module is loaded at `ptr`, with its debug info at `dbg_path`
+pub fn loadModule(ptr: *const anyopaque, size: usize, name: [*:0]const u8, dbg_path: [*:0]const u8) void {
+    _ = .{ ptr, size, name, dbg_path };
+    @panic("TODO: raddbg loadModule");
+}
+
 // ---
 
 const section = ".raddbg";
