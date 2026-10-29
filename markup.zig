@@ -4,7 +4,11 @@ const options = @import("options");
 
 pub const std_views = @import("std_views.zig");
 
-pub const enabled = options.enabled;
+// match c functionality of allowing to disable raddbg from within the program
+const root = @import("root");
+const markup_enabled = !(@hasDecl(root, "raddbg_markup_stubs") and root.raddbg_markup_stubs);
+
+pub const enabled = markup_enabled and options.enabled;
 
 /// Equivalent of `raddbg_type_view(type, expr)`: tells the debugger how to visualize a type.
 /// `T` can be a zig type or a string pattern
