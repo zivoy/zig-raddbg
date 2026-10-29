@@ -4,6 +4,8 @@ const raddbg = @import("raddbg");
 comptime {
     raddbg.std_views.registerDefaults();
     raddbg.entryPoint("add");
+
+    raddbg.std_views.multiArrayListOf(Vec3);
 }
 
 const Color = enum { red, green, blue };

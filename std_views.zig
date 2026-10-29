@@ -67,3 +67,42 @@ pub fn enumContainers() void {
     raddbg.typeView("enums.EnumMap(?)", "rows($, values, bin(bits.bits))");
     raddbg.typeView("enums.EnumArray(?)", "no_char(values)");
 }
+
+pub fn multiArrayListOf(comptime T: type) void {
+    const info = @typeInfo(T).@"struct";
+    var rows: []const u8 = "";
+    for (columnLayout(T)) |column| {
+        const size = @sizeOf(info.field_types[column.field]);
+        if (size == 0) continue;
+
+        // there are some issues with raddbg, so I can't cast to the correct type and use array, so for now it will be be memory
+        rows = rows ++ std.fmt.comptimePrint(", {s} = memory(bytes + capacity * {d}, size = len * {d})", .{ info.field_names[column.field], column.offset, size });
+    }
+
+    raddbg.typeView(std.MultiArrayList(T), "rows($, len, capacity, bytes" ++ rows ++ ")");
+}
+
+const Column = struct { field: usize, offset: usize };
+
+fn columnLayout(comptime T: type) [@typeInfo(T).@"struct".field_names.len]Column {
+    const info = @typeInfo(T).@"struct";
+    var order: [info.field_names.len]usize = undefined;
+    for (&order, 0..) |*slot, i| slot.* = i;
+    const Sort = struct {
+        fn alignment(field: usize) usize {
+            return info.field_attrs[field].@"align" orelse @alignOf(info.field_types[field]);
+        }
+        fn lessThan(_: void, a: usize, b: usize) bool {
+            return alignment(a) > alignment(b);
+        }
+    };
+    std.mem.sort(usize, &order, {}, Sort.lessThan);
+
+    var layout: [order.len]Column = undefined;
+    var offset: usize = 0;
+    for (order, 0..) |field, i| {
+        layout[i] = .{ .field = field, .offset = offset };
+        offset += @sizeOf(info.field_types[field]);
+    }
+    return layout;
+}
