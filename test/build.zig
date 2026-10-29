@@ -45,5 +45,6 @@ pub fn build(b: *std.Build) void {
 
     const debug_types_step = b.step("debug-types", "Run type test in debugger");
     const debug_types_run = raddbg.debugProgram(b, types_exe);
+    debug_types_run.addArg("--auto_run");
     debug_types_step.dependOn(&debug_types_run.step);
 }
