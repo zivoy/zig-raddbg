@@ -125,3 +125,5 @@ pub fn errors() void {
     raddbg.typeView("error{?}!?", "rows($, error, payload)");
     raddbg.typeView("anyerror!?", "rows($, error, payload)");
 }
+
+// cant really register optional, since `?` is the wildcard, but it should be fine, a `?T` is just struct that has `{ payload, some }` and a `?[]T` is an array that can have its ptr be 0
