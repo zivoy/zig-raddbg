@@ -8,6 +8,7 @@ pub fn registerDefaults() void {
     queues();
     hashMaps();
     bitSets();
+    enumContainers();
 }
 
 pub fn slices() void {
@@ -59,4 +60,10 @@ pub fn bitSets() void {
     raddbg.typeView("bit_set.Array(?)", "bin(masks)");
     raddbg.typeView(std.bit_set.Dynamic, "rows($, bit_length, bin(array(masks, (bit_length + 63) / 64)))");
     raddbg.typeView(std.bit_set.DynamicManaged, "unmanaged");
+}
+
+pub fn enumContainers() void {
+    raddbg.typeView("enums.EnumSet(?)", "bin(bits.bits)");
+    raddbg.typeView("enums.EnumMap(?)", "rows($, values, bin(bits.bits))");
+    raddbg.typeView("enums.EnumArray(?)", "no_char(values)");
 }
