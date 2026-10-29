@@ -11,6 +11,7 @@ pub fn registerDefaults() void {
     enumContainers();
     linkedLists();
     io();
+    errors();
 }
 
 pub fn slices() void {
@@ -118,4 +119,9 @@ pub fn io() void {
     raddbg.typeView(std.Io.Writer, "array(buffer.ptr, end)");
     raddbg.typeView(std.Io.Reader, "array(buffer.ptr + seek, end - seek)");
     raddbg.typeView(std.Io.Writer.Allocating, "writer");
+}
+
+pub fn errors() void {
+    raddbg.typeView("error{?}!?", "rows($, error, payload)");
+    raddbg.typeView("anyerror!?", "rows($, error, payload)");
 }
