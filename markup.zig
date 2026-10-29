@@ -87,14 +87,14 @@ pub fn threadIdColorRgba(id: std.Thread.Id, r: f32, g: f32, b: f32, a: f32) void
 }
 
 /// Equivalent of `raddbg_break()`: stops in the debugger at this point
-pub fn breakpoint() void {
-    @panic("TODO: raddbg debugBreak");
+pub inline fn breakpoint() void {
+    if (!enabled) return;
+    @breakpoint();
 }
 
 /// Equivalent of `raddbg_break_if(expr)`: stops in the debugger at this point if `condition` is true
-pub fn breakpointIf(condition: bool) void {
-    _ = condition; // autofix
-    @panic("TODO: raddbg debugBreakIf");
+pub inline fn breakpointIf(condition: bool) void {
+    if (condition) breakpoint();
 }
 
 /// Equivalent of `raddbg_watch(fmt, ...)`: adds an expression to the debug
