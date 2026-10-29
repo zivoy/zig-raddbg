@@ -284,6 +284,59 @@ test "disabled markup does nothing" {
     try testing.expect(!isAttached());
 }
 
+/// Section header named `name` in an ELF image
+fn elfSection(image: []const u8, name: []const u8) !?std.elf.Elf64_Shdr {
+    var reader = std.Io.Reader.fixed(image);
+    const header = try std.elf.Header.read(&reader);
+
+    var strings: []const u8 = &.{};
+    var headers = header.iterateSectionHeadersBuffer(image);
+    var index: usize = 0;
+    while (try headers.next()) |shdr| : (index += 1) {
+        if (index == header.shstrndx) strings = image[@intCast(shdr.sh_offset)..][0..@intCast(shdr.sh_size)];
+    }
+
+    headers = header.iterateSectionHeadersBuffer(image);
+    while (try headers.next()) |shdr| {
+        if (std.mem.eql(u8, std.mem.sliceTo(strings[shdr.sh_name..], 0), name)) return shdr;
+    }
+    return null;
+}
+
+// Checks the sections themselves: the strings are compile-time constants in the test binary too,
+// so searching the whole file for them would also pass when `embed` writes nothing.
+test "type views and entry points are written into the .raddbg section" {
+    if (!enabled or builtin.object_format != .elf) return error.SkipZigTest;
+    comptime typeView("[]markup_test_type", "array(ptr, len)");
+    comptime entryPoint("markup_test_entry");
+
+    const io = std.Io.Threaded.global_single_threaded.io();
+    var path_buffer: [std.fs.max_path_bytes]u8 = undefined;
+    const path = path_buffer[0..try std.process.executablePath(io, &path_buffer)];
+    const image = try std.Io.Dir.cwd().readFileAlloc(io, path, testing.allocator, .limited(256 << 20));
+    defer testing.allocator.free(image);
+
+    const shdr = (try elfSection(image, ".raddbg")) orelse return error.TestUnexpectedResult;
+    const data = image[@intCast(shdr.sh_offset)..][0..@intCast(shdr.sh_size)];
+    try testing.expect(std.mem.indexOf(u8, data, typeViewText("[]markup_test_type", "array(ptr, len)")) != null);
+    try testing.expect(std.mem.indexOf(u8, data, entryPointText("markup_test_entry")) != null);
+}
+
+test "the is-attached marker is one writable byte in .rdbgia" {
+    if (!enabled or builtin.object_format != .elf) return error.SkipZigTest;
+
+    const io = std.Io.Threaded.global_single_threaded.io();
+    var path_buffer: [std.fs.max_path_bytes]u8 = undefined;
+    const path = path_buffer[0..try std.process.executablePath(io, &path_buffer)];
+    const image = try std.Io.Dir.cwd().readFileAlloc(io, path, testing.allocator, .limited(256 << 20));
+    defer testing.allocator.free(image);
+
+    const shdr = (try elfSection(image, ".rdbgia")) orelse return error.TestUnexpectedResult;
+    try testing.expectEqual(1, shdr.sh_size);
+    try testing.expect(shdr.sh_flags & std.elf.SHF_WRITE != 0);
+    try testing.expect(shdr.sh_flags & std.elf.SHF_ALLOC != 0);
+}
+
 test "default views compile" {
     comptime std_views.registerDefaults();
 }
