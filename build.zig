@@ -59,17 +59,21 @@ pub fn makeRaddbgProject(b: *std.Build, raddbg_project: *std.Build, debugged_pro
 }
 
 pub fn debugProgram(b: *std.Build, raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile, project_file: ?std.Build.LazyPath) *std.Build.Step.Run {
+    const target = if (program.root_module.resolved_target != null) program.root_module.resolved_target.? else b.graph.host;
+
     const run_debugger = b.addSystemCommand(&.{"raddbg"});
 
-    const target = if (program.root_module.resolved_target != null) program.root_module.resolved_target.? else b.graph.host;
+    var project: ?std.Build.LazyPath = null;
     if (target.result.os.tag == .linux) {
-        var project = program.getEmittedBinDirectory().path(b, b.fmt("{s}.raddbg_project", .{program.name}));
+        project = program.getEmittedBinDirectory().path(b, b.fmt("{s}.raddbg_project", .{program.name}));
         if (project_file) |proj| project = proj;
-        const build_proj = makeRaddbgProject(b, raddbg_dep.builder, program, project);
+        const build_proj = makeRaddbgProject(b, raddbg_dep.builder, program, project.?);
         run_debugger.step.dependOn(&build_proj.step);
-
-        run_debugger.addFileArg2(project, .{ .prefix = "--project:" });
+    } else {
+        project = project_file;
     }
+
+    if (project != null) run_debugger.addFileArg2(project.?, .{ .prefix = "--project:" });
 
     run_debugger.addFileArg2(program.getEmittedBin(), .{});
 
