@@ -28,7 +28,10 @@ pub fn entryPoint(comptime name: []const u8) void {
 pub fn isAttached() bool {
     if (!enabled) return false;
     // volatile: the debugger writes the byte from outside, so the read must not be folded to 0
-    return @as(*const volatile u8, &Marker.byte[0]).* != 0;
+    if (@as(*const volatile u8, &Marker.byte[0]).* != 0) return true;
+    // linux fallback, check TracerPid
+    if (builtin.os.tag == .linux) return tracedByDebugger();
+    return false;
 }
 
 // ---
@@ -94,6 +97,20 @@ comptime {
     if (enabled) {
         @export(&Marker.byte, .{ .name = "raddbg_is_attached_byte_marker" });
     }
+}
+
+fn tracedByDebugger() bool {
+    std.debug.assert(builtin.os.tag == .linux);
+    // debugging aid, so the global single-threaded Io is used instead of asking the caller for one
+    const io = std.Io.Threaded.global_single_threaded.io();
+
+    var buffer: [512]u8 = undefined;
+    const status = std.Io.Dir.cwd().readFile(io, "/proc/self/status", &buffer) catch return false;
+
+    const key = "TracerPid:";
+    const start = std.mem.indexOf(u8, status, key) orelse return false;
+    const value = std.mem.trim(u8, status[start + key.len ..], " \t");
+    return value.len > 0 and value[0] != '0';
 }
 
 // ---
