@@ -96,7 +96,7 @@ pub fn main(init: std.process.Init) !void {
     var target: u32 = 99;
     var pointer_one: *u32 = &target;
     var pointer_const: *const u32 = &target;
-    var pointer_pointer: **u32 = &pointer_one;
+    var pointer_ptr: **u32 = &pointer_one;
     var pointer_vec: *const Vec3 = &vec;
     var pointer_any: *const anyopaque = &target;
     var pointer_opaque: ?*Opaque = null;
@@ -116,7 +116,7 @@ pub fn main(init: std.process.Init) !void {
     var many_sent: [*:0]const u8 = &array_sentinel;
     var c_ptr: [*c]const u8 = &array_ints;
     var c_ptr_null: [*c]const u8 = null;
-    var sl: []const u8 = array_ints[1..4];
+    var slice: []const u8 = array_ints[1..4];
     var slice_mut: []u8 = @constCast(array_ints[0..2]);
     var slice_sent: [:0]const u8 = "sentinel slice";
     var slice_empty: []const u32 = &.{};
@@ -220,7 +220,7 @@ pub fn main(init: std.process.Init) !void {
 
     raddbg.breakpoint();
 
-    std.mem.doNotOptimizeAway(.{ &optional_some, &optional_none, &error_ok, &error_bad, &optional_err, &vec, &packed_struct, &leaf, &root, &union_bare, &union_tag_none, &union_tag_text, &union_tag_vec, &union_ext, &union_pk, &tuple, &tuple_u8, &tuple_f32, &array_ints, &array_sentinel, &array_empty, &array_2d, &array_vecs, &array_big, &array_str, &vec4, &vec_bool, &zero_bits, &odd_width, &int_8, &uint_8, &int_32, &uint_64, &int_128, &usize_val, &float_16, &float_32, &float_64, &float_80, &float_128, &bool_val, &void_val, &cint, &cchar, &optional_ptr, &optional_ptr_null, &error_any, &enum_1, &enum_2, &enum_3, &extern_struct, &pointer_const, &pointer_pointer, &pointer_vec, &pointer_any, &pointer_opaque, &pointer_fn, &many, &many_sent, &c_ptr, &c_ptr_null, &sl, &slice_mut, &slice_sent, &slice_empty, &slice_vec, &slice_of_slice, &text, &vec_int, &version, &allocator, zero_bits, odd_width, int_8, uint_8, int_32, uint_64, int_128, usize_val, float_16, float_32, float_64, float_80, float_128, bool_val, void_val, cint, cchar, optional_some, optional_none, optional_ptr, optional_ptr_null, error_ok, error_bad, error_any, optional_err, enum_1, enum_2, enum_3, vec, packed_struct, extern_struct, root, union_bare, union_tag_none, union_tag_text, union_tag_vec, union_ext, union_pk, tuple, pointer_one, pointer_const, pointer_pointer, pointer_vec, pointer_any, pointer_opaque, pointer_fn, array_ints, array_sentinel, array_empty, array_2d, array_vecs, array_big, array_str, many, many_sent, c_ptr, c_ptr_null, sl, slice_mut, slice_sent, slice_empty, slice_vec, slice_of_slice, text, vec4, vec_int, vec_bool, &array_list, &array_list_empty, &array_list_vec, &array_list_aligned, &array_list_managed, &priority_queue, &priority_dequeue, &deque, &hashmap, &string_hashmap, &hashmap_unmanaged, &auto_hashmap, &string_array_hashmap, &buf_map, &buf_set, &bitset_int, &bitsset_array, &bitset_dynamic, &bitset_dynamic_managed, &enum_set, &enum_map, &enum_array, &multi_array_list, &singly_linked_list, &doubly_linked_list, &writer, &reader, &alloc_writer, &prng, version, allocator, &optional_slice, &optional_slice_null, &error_slice, &optional_vec, &io });
+    std.mem.doNotOptimizeAway(.{ &optional_some, &optional_none, &error_ok, &error_bad, &optional_err, &vec, &packed_struct, &leaf, &root, &union_bare, &union_tag_none, &union_tag_text, &union_tag_vec, &union_ext, &union_pk, &tuple, &tuple_u8, &tuple_f32, &array_ints, &array_sentinel, &array_empty, &array_2d, &array_vecs, &array_big, &array_str, &vec4, &vec_bool, &zero_bits, &odd_width, &int_8, &uint_8, &int_32, &uint_64, &int_128, &usize_val, &float_16, &float_32, &float_64, &float_80, &float_128, &bool_val, &void_val, &cint, &cchar, &optional_ptr, &optional_ptr_null, &error_any, &enum_1, &enum_2, &enum_3, &extern_struct, &pointer_const, &pointer_ptr, &pointer_vec, &pointer_any, &pointer_opaque, &pointer_fn, &many, &many_sent, &c_ptr, &c_ptr_null, &slice, &slice_mut, &slice_sent, &slice_empty, &slice_vec, &slice_of_slice, &text, &vec_int, &version, &allocator, zero_bits, odd_width, int_8, uint_8, int_32, uint_64, int_128, usize_val, float_16, float_32, float_64, float_80, float_128, bool_val, void_val, cint, cchar, optional_some, optional_none, optional_ptr, optional_ptr_null, error_ok, error_bad, error_any, optional_err, enum_1, enum_2, enum_3, vec, packed_struct, extern_struct, root, union_bare, union_tag_none, union_tag_text, union_tag_vec, union_ext, union_pk, tuple, pointer_one, pointer_const, pointer_ptr, pointer_vec, pointer_any, pointer_opaque, pointer_fn, array_ints, array_sentinel, array_empty, array_2d, array_vecs, array_big, array_str, many, many_sent, c_ptr, c_ptr_null, slice, slice_mut, slice_sent, slice_empty, slice_vec, slice_of_slice, text, vec4, vec_int, vec_bool, &array_list, &array_list_empty, &array_list_vec, &array_list_aligned, &array_list_managed, &priority_queue, &priority_dequeue, &deque, &hashmap, &string_hashmap, &hashmap_unmanaged, &auto_hashmap, &string_array_hashmap, &buf_map, &buf_set, &bitset_int, &bitsset_array, &bitset_dynamic, &bitset_dynamic_managed, &enum_set, &enum_map, &enum_array, &multi_array_list, &singly_linked_list, &doubly_linked_list, &writer, &reader, &alloc_writer, &prng, version, allocator, &optional_slice, &optional_slice_null, &error_slice, &optional_vec, &io });
 
     std.debug.print("done: {s}\n", .{text});
 }
