@@ -9,6 +9,7 @@ pub fn registerDefaults() void {
     hashMaps();
     bitSets();
     enumContainers();
+    linkedLists();
 }
 
 pub fn slices() void {
@@ -105,4 +106,9 @@ fn columnLayout(comptime T: type) [@typeInfo(T).@"struct".field_names.len]Column
         offset += @sizeOf(info.field_types[field]);
     }
     return layout;
+}
+
+pub fn linkedLists() void {
+    raddbg.typeView(std.SinglyLinkedList, "list(first, next)");
+    raddbg.typeView(std.DoublyLinkedList, "list(first, next)");
 }
