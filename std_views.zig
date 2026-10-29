@@ -10,6 +10,7 @@ pub fn registerDefaults() void {
     bitSets();
     enumContainers();
     linkedLists();
+    io();
 }
 
 pub fn slices() void {
@@ -111,4 +112,10 @@ fn columnLayout(comptime T: type) [@typeInfo(T).@"struct".field_names.len]Column
 pub fn linkedLists() void {
     raddbg.typeView(std.SinglyLinkedList, "list(first, next)");
     raddbg.typeView(std.DoublyLinkedList, "list(first, next)");
+}
+
+pub fn io() void {
+    raddbg.typeView(std.Io.Writer, "array(buffer.ptr, end)");
+    raddbg.typeView(std.Io.Reader, "array(buffer.ptr + seek, end - seek)");
+    raddbg.typeView(std.Io.Writer.Allocating, "writer");
 }
