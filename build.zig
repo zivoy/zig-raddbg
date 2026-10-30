@@ -77,7 +77,16 @@ pub fn addProjectFile(raddbg_dep: *std.Build.Dependency, program: *std.Build.Ste
     return run;
 }
 
-pub fn addDebugProgram(raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile, project_file: ?std.Build.LazyPath) *std.Build.Step.Run {
+// options from readme
+pub const RaddbgOptions = struct {
+    auto_run: bool = false,
+    user: ?std.Build.LazyPath = null,
+    project: ?std.Build.LazyPath = null,
+    quit_after_success: bool = false,
+    // ipc: bool = false,
+};
+
+pub fn addDebugProgram(raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile, options: RaddbgOptions) *std.Build.Step.Run {
     const target = program.rootModuleTarget();
     const owner = program.step.owner;
 
@@ -91,13 +100,16 @@ pub fn addDebugProgram(raddbg_dep: *std.Build.Dependency, program: *std.Build.St
 
     const project: ?std.Build.LazyPath = blk: {
         if (target.ofmt != .elf) break :blk null;
-        const proj_path = getDefualtProjectFile(project_file, program.getEmittedBinDirectory(), owner, program.name);
+        const proj_path = getDefualtProjectFile(options.project, program.getEmittedBinDirectory(), owner, program.name);
         const build_proj = createProjectFile(raddbg_dep, program, proj_path);
         run_debugger.step.dependOn(&build_proj.step);
         break :blk proj_path;
-    } orelse project_file;
+    } orelse options.project;
 
     if (project != null) run_debugger.addFileArg2(project.?, .{ .prefix = "--project:" });
+    if (options.user != null) run_debugger.addFileArg2(options.user.?, .{ .prefix = "--user:" });
+    if (options.auto_run) run_debugger.addArg("--auto_run");
+    if (options.quit_after_success) run_debugger.addArg("--quit_after_success");
 
     run_debugger.addFileArg2(program.getEmittedBin(), .{});
 

@@ -40,10 +40,9 @@ exe.root_module.addImport("raddbg", raddbg_dep.module("raddbg"));
 // --- optional ---
 
 // this allows you to use zig build debug to build your program and immediately open it in the debugger,
-// you can use `--auto_run` to also start it. See the RAD Debugger `raddbg_readme.md` for more info.
+// you can use `.{ .auto_run = true }` to also start it. See the RAD Debugger `raddbg_readme.md` for more info.
 const debug_step = b.step("debug", "Run program in debugger");
-const debug_run = @import("raddbg").addDebugProgram(raddbg_dep, exe, null));
-// debug_run.addArg("--auto_run");
+const debug_run = @import("raddbg").addDebugProgram(raddbg_dep, exe, .{}));
 debug_step.dependOn(&debug_run.step);
 ```
 
