@@ -24,6 +24,8 @@ pub fn build(b: *std.Build) void {
         .use_llvm = true, // raddbg crashes with the zig backend https://github.com/EpicGames/raddebugger/issues/1006
     });
     b.installArtifact(test_exe);
+    // emit the project file on install
+    _ = raddbg.addProjectFile(raddbg_dep, test_exe, b.path("./test.raddbg_project"));
 
     const types_exe = b.addExecutable(.{
         .name = "types_test",
