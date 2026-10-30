@@ -61,7 +61,13 @@ pub fn makeRaddbgProject(b: *std.Build, raddbg_project: *std.Build, debugged_pro
 pub fn debugProgram(b: *std.Build, raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile, project_file: ?std.Build.LazyPath) *std.Build.Step.Run {
     const target = program.root_module.resolved_target orelse b.graph.host;
 
-    const run_debugger = b.addSystemCommand(&.{"raddbg"});
+    const raddbg_prog = b.findProgram(.{ .names = &.{"raddbg"} }) orelse {
+        const fail_run = b.addSystemCommand(&.{""});
+        const fail = b.addFail("raddbg not found");
+        fail_run.step.dependOn(&fail.step);
+        return fail_run;
+    };
+    const run_debugger = b.addSystemCommand(&.{raddbg_prog});
 
     var project: ?std.Build.LazyPath = null;
     if (target.result.os.tag == .linux) {
