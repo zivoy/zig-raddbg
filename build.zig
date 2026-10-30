@@ -38,19 +38,21 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_mod_tests_llvm.step);
 }
 
-pub fn makeRaddbgProject(b: *std.Build, raddbg_project: *std.Build, debugged_program: *std.Build.Step.Compile, project_file: std.Build.LazyPath) *std.Build.Step.Run {
+fn makeRaddbgProject(raddbg_project: *std.Build, debugged_program: *std.Build.Step.Compile, project_file: std.Build.LazyPath) *std.Build.Step.Run {
+    const owner = debugged_program.step.owner;
+
     const exe = raddbg_project.addExecutable(.{
         .name = "raddbg_project",
         .root_module = raddbg_project.createModule(.{
             .root_source_file = raddbg_project.path("raddbg_project.zig"),
-            .target = b.graph.host,
+            .target = owner.graph.host,
             .optimize = .safe,
         }),
     });
 
     const markup = raddbg_project.addObjCopy(debugged_program.getEmittedBin(), .{ .format = .binary, .only_section = ".raddbg" });
 
-    const run = b.addRunArtifact(exe);
+    const run = owner.addRunArtifact(exe);
     run.addFileArg(markup.getOutput());
     run.addFileArg(project_file);
     run.has_side_effects = true;
@@ -58,25 +60,36 @@ pub fn makeRaddbgProject(b: *std.Build, raddbg_project: *std.Build, debugged_pro
     return run;
 }
 
-pub fn debugProgram(b: *std.Build, raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile, project_file: ?std.Build.LazyPath) *std.Build.Step.Run {
-    const target = program.rootModuleTarget();
+fn getDefualtProjectFile(path: ?std.Build.LazyPath, b: *std.Build, program_name: []const u8) std.Build.LazyPath {
+    return path orelse b.path(b.fmt("{s}.raddbg_project", .{program_name}));
+}
 
-    const raddbg_prog = b.findProgram(.{ .names = &.{"raddbg"} }) orelse {
-        const fail_run = b.addSystemCommand(&.{""});
-        const fail = b.addFail("raddbg not found");
+pub fn addProjectFile(raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile, path: ?std.Build.LazyPath) ?*std.Build.Step.Run {
+    const target = program.rootModuleTarget();
+    const owner = program.step.owner;
+    if (target.ofmt != .elf) return null;
+
+    const run = makeRaddbgProject(raddbg_dep.builder, program, getDefualtProjectFile(path, owner, program.name));
+    owner.getInstallStep().dependOn(&run.step);
+    return run;
+}
+
+pub fn addDebugProgram(raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile, project_file: ?std.Build.LazyPath) *std.Build.Step.Run {
+    const owner = program.step.owner;
+
+    const raddbg_prog = owner.findProgram(.{ .names = &.{"raddbg"} }) orelse {
+        const fail_run = owner.addSystemCommand(&.{""});
+        const fail = owner.addFail("raddbg not found");
         fail_run.step.dependOn(&fail.step);
         return fail_run;
     };
-    const run_debugger = b.addSystemCommand(&.{raddbg_prog});
+    const run_debugger = owner.addSystemCommand(&.{raddbg_prog});
 
-    var project: ?std.Build.LazyPath = null;
-    if (target.ofmt == .elf) {
-        project = project_file orelse program.getEmittedBinDirectory().path(b, b.fmt("{s}.raddbg_project", .{program.name}));
-        const build_proj = makeRaddbgProject(b, raddbg_dep.builder, program, project.?);
+    const project: ?std.Build.LazyPath = blk: {
+        const build_proj = addProjectFile(raddbg_dep, program, project_file) orelse break :blk null;
         run_debugger.step.dependOn(&build_proj.step);
-    } else {
-        project = project_file;
-    }
+        break :blk getDefualtProjectFile(project_file, owner, program.name);
+    } orelse project_file;
 
     if (project != null) run_debugger.addFileArg2(project.?, .{ .prefix = "--project:" });
 

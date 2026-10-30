@@ -3,7 +3,8 @@
 Zig port of [raddbg_markup.h](https://github.com/EpicGames/raddebugger/blob/master/src/lib_raddbg_markup/raddbg_markup.h) for the [RAD Debugger](https://github.com/EpicGames/raddebugger).
 Allowing you to tell the debugger how to display certain types.
 
-Also, there is a build time helper `makeRaddbgProject` for extracting the markup from inside of an elf binary to the raddbg project format, this is because on linux raddbg can't parse the directives from the `.raddbg` section of the binary.
+Also, there is a build time helpers `addProjectFile` and `addDebugProgram` for extracting the markup from inside of an elf binary to the raddbg project format, and for running the debugger after the program is built.
+The first one is needed because on linux raddbg can't parse the directives from the `.raddbg` section of the binary.
 
 ## Zig Version
 
@@ -41,7 +42,7 @@ exe.root_module.addImport("raddbg", raddbg_dep.module("raddbg"));
 // this allows you to use zig build debug to build your program and immediately open it in the debugger,
 // you can use `--auto_run` to also start it. See the RAD debugger `raddbg_readme.md` for more info.
 const debug_step = b.step("debug", "Run program in debugger");
-const debug_run = @import("raddbg").debugProgram(b, raddbg_dep, exe, null));
+const debug_run = @import("raddbg").addDebugProgram(raddbg_dep, exe, null));
 // debug_run.addArg("--auto_run");
 debug_step.dependOn(&debug_run.step);
 ```
