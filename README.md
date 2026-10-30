@@ -55,7 +55,7 @@ const raddbg = @import("raddbg");
 const Vec3 = struct {
     x: f32,
     y: f32,
-    z: f32
+    z: f32,
 
     comptime {
         // this block will only be emitted if Vec3 is actually used in your program
@@ -68,7 +68,7 @@ comptime {
     raddbg.std_views.registerDefaults();
 }
 
-// like in the c header version, you can set this to true to disable raddbg features from withing the program.
+// like in the c header version, you can set this to true to disable raddbg features from within the program.
 pub const raddbg_markup_stubs = false;
 
 // in a function
