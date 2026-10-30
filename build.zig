@@ -62,6 +62,8 @@ pub fn createProjectFile(raddbg_dep: *std.Build.Dependency, debugged_program: *s
     run.addFileArg(debugged_program.getEmittedBin());
     run.has_side_effects = true;
 
+    run.setName("generate raddbg project file");
+
     return run;
 }
 
