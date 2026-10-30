@@ -5,6 +5,10 @@ target:
 {
   label: someFunc
   entry_point: someFunc
+  working_directory: TODO
+  executable: TODO
+  arguments: ""
+  enabled: 1
 }
 type_view:
 {

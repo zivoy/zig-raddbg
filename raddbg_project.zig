@@ -25,7 +25,12 @@ pub fn main(init: std.process.Init) !void {
         else => std.process.fatal("failed to read {s}: {t}", .{ project_file_path, err }),
     };
 
-    const out = try update(arena, existing, markup);
+    const out = try update(arena, existing, markup, .{
+        .enabled = true,
+        .arguments = "",
+        .working_directory = "TODO",
+        .executable = "TODO",
+    });
     if (std.mem.eql(u8, out, existing)) return;
 
     // change, rewrite file
@@ -34,7 +39,7 @@ pub fn main(init: std.process.Init) !void {
 }
 
 /// Returns the new project file contents. `markup` is the `.raddbg` section which is nulL separated entries
-fn update(arena: Allocator, existing: []const u8, markup: []const u8) ![]const u8 {
+fn update(arena: Allocator, existing: []const u8, markup: []const u8, entrypoint_info: EntrypointInfo) ![]const u8 {
     var block: std.ArrayList(u8) = .empty;
     var seen: std.StringHashMapUnmanaged(void) = .empty;
     var entries = std.mem.splitScalar(u8, markup, '\x00');
@@ -44,7 +49,7 @@ fn update(arena: Allocator, existing: []const u8, markup: []const u8) ![]const u
         if ((try seen.getOrPut(arena, entry)).found_existing) continue;
 
         if (isEntryPoint(entry)) {
-            const target = try transformEntryPointToTarget(arena, entry);
+            const target = try transformEntryPointToTarget(arena, entry, entrypoint_info);
             try block.appendSlice(arena, target);
         } else {
             try block.appendSlice(arena, entry);
@@ -110,15 +115,24 @@ fn isEntryPoint(raw: []const u8) bool {
     return std.mem.startsWith(u8, raw, "entry_point: \"") and std.mem.endsWith(u8, raw, "\"");
 }
 
-fn transformEntryPointToTarget(gpa: std.mem.Allocator, raw: []const u8) ![]const u8 {
+const EntrypointInfo = struct {
+    working_directory: []const u8,
+    executable: []const u8,
+    arguments: []const u8,
+    enabled: bool,
+};
+
+fn transformEntryPointToTarget(gpa: std.mem.Allocator, raw: []const u8, info: EntrypointInfo) ![]const u8 {
     std.debug.assert(isEntryPoint(raw));
 
     const offset = (std.mem.indexOfScalar(u8, raw, '"') orelse return error.InvalidEntroypoint) + 1;
     const len = std.mem.indexOfScalar(u8, raw[offset..], '"') orelse return error.InvalidEntroypoint;
     const func_name = raw[offset .. offset + len];
 
-    // TODO: need to fill out `executable` and `working_directory` and maybe `arguments` and `enabled`
-    return gpa.print("target: {{ label: \"{0s}\", entry_point: \"{0s}\" }}", .{func_name});
+    return gpa.print(
+        "target: {{ label: ```{0s}```, entry_point: ```{0s}```, working_directory: ```{1s}```, executable: ```{2s}```, arguments: ```{3s}```, enabled: {4d} }}",
+        .{ func_name, info.working_directory, info.executable, info.arguments, @intFromBool(info.enabled) },
+    );
 }
 
 const test_markup = "\x00type_view: {type: ```a```, expr: ```x```}\x00" ++
@@ -127,13 +141,21 @@ const test_markup = "\x00type_view: {type: ```a```, expr: ```x```}\x00" ++
 
 const test_block = begin_marker ++ "\n" ++
     "type_view: {type: ```a```, expr: ```x```}\n" ++
-    "target: { label: \"main.main\", entry_point: \"main.main\" }\n" ++
+    "target: { label: ```main.main```, entry_point: ```main.main```, working_directory: ```/home```, executable: ```test```, arguments: ``````, enabled: 1 }\n" ++
     end_marker ++ "\n";
+
+const test_entrypoint_info = EntrypointInfo{
+    .arguments = "",
+    .enabled = true,
+
+    .executable = "test",
+    .working_directory = "/home",
+};
 
 fn testUpdate(existing: []const u8) ![]const u8 {
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    return std.testing.allocator.dupe(u8, try update(arena.allocator(), existing, test_markup));
+    return std.testing.allocator.dupe(u8, try update(arena.allocator(), existing, test_markup, test_entrypoint_info));
 }
 
 test "new file gets header and block, duplicates and junk are dropped" {
