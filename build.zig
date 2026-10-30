@@ -38,8 +38,8 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_mod_tests_llvm.step);
 }
 
-fn getDefualtProjectFile(path: ?std.Build.LazyPath, b: *std.Build, program_name: []const u8) std.Build.LazyPath {
-    return path orelse b.path(b.fmt("{s}.raddbg_project", .{program_name}));
+fn getDefualtProjectFile(path: ?std.Build.LazyPath, base_path: std.Build.LazyPath, b: *std.Build, program_name: []const u8) std.Build.LazyPath {
+    return path orelse base_path.path(b, b.fmt("{s}.raddbg_project", .{program_name}));
 }
 
 pub fn createProjectFile(raddbg_dep: *std.Build.Dependency, debugged_program: *std.Build.Step.Compile, project_file: std.Build.LazyPath) *std.Build.Step.Run {
@@ -70,7 +70,7 @@ pub fn addProjectFile(raddbg_dep: *std.Build.Dependency, program: *std.Build.Ste
     const owner = program.step.owner;
     if (target.ofmt != .elf) return null;
 
-    const run = createProjectFile(raddbg_dep, program, getDefualtProjectFile(path, owner, program.name));
+    const run = createProjectFile(raddbg_dep, program, getDefualtProjectFile(path, owner.path("."), owner, program.name));
     owner.getInstallStep().dependOn(&run.step);
     return run;
 }
@@ -89,7 +89,7 @@ pub fn addDebugProgram(raddbg_dep: *std.Build.Dependency, program: *std.Build.St
 
     const project: ?std.Build.LazyPath = blk: {
         if (target.ofmt != .elf) break :blk null;
-        const proj_path = getDefualtProjectFile(project_file, owner, program.name);
+        const proj_path = getDefualtProjectFile(project_file, program.getEmittedBinDirectory(), owner, program.name);
         const build_proj = createProjectFile(raddbg_dep, program, proj_path);
         run_debugger.step.dependOn(&build_proj.step);
         break :blk proj_path;
