@@ -79,9 +79,15 @@ pub fn addProjectFile(raddbg_dep: *std.Build.Dependency, program: *std.Build.Ste
 
 // options from readme
 pub const RaddbgOptions = struct {
+    /// Run all active targets after the debugger initially initially starts.
     auto_run: bool = false,
+    /// Use to specify the location of a user file which should be used. User files are used by default to store user-related settings, including window and panel setups, path mapping, and visual settings.
+    /// If this file does not exist, it will be created as necessary. This file will be autosaved as user-related changes are made.
     user: ?std.Build.LazyPath = null,
+    /// Use to specify the location of a project file which should be used. Project files are used by default to store project-related settings.
+    /// If this file does not exist, it will be created as necessary. This file will be autosaved as project-related changes are made.
     project: ?std.Build.LazyPath = null,
+    /// Close the debugger automatically after all processes exit, if they all exited successfully (with code 0), and ran with no interruptions.
     quit_after_success: bool = false,
     // ipc: bool = false,
 };
