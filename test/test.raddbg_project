@@ -1,7 +1,11 @@
 // raddbg 0.9.30 project file
 
 raddbg_markup: begin
-entry_point: main
+target:
+{
+  label: someFunc
+  entry_point: someFunc
+}
 type_view:
 {
   type: "test.Vec3"

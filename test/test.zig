@@ -12,7 +12,11 @@ comptime {
     raddbg.typeView(Vec3, "rows($, x, y, z)");
     raddbg.typeView(Vec3, "rows($, x, y, z)"); // duplicate, should dedupe
 
-    raddbg.entryPoint("main");
+    raddbg.entryPoint("someFunc");
+}
+
+fn someFunc(n: f32) f32 {
+    return n * 2 / 5;
 }
 
 pub fn main(init: std.process.Init) void {
@@ -27,6 +31,7 @@ pub fn main(init: std.process.Init) void {
 
     var vec: Vec3 = .{ .x = 1, .y = 0, .z = 20 };
     vec.y = (vec.x + vec.z) / 7;
+    vec.z = someFunc(vec.z + vec.y);
     al.print(allocator, " - {any}", .{vec}) catch unreachable;
 
     std.debug.print("{s}\n", .{al.items});

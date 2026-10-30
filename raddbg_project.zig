@@ -43,7 +43,12 @@ fn update(arena: Allocator, existing: []const u8, markup: []const u8) ![]const u
         if (!isEntry(entry)) continue; // padding / linker leftovers
         if ((try seen.getOrPut(arena, entry)).found_existing) continue;
 
-        try block.appendSlice(arena, entry);
+        if (isEntryPoint(entry)) {
+            const target = try transformEntryPointToTarget(arena, entry);
+            try block.appendSlice(arena, target);
+        } else {
+            try block.appendSlice(arena, entry);
+        }
         try block.append(arena, '\n');
     }
 
@@ -97,8 +102,23 @@ fn isEntry(raw: []const u8) bool {
     if (!std.unicode.utf8ValidateSlice(raw)) return false;
 
     const type_view = std.mem.startsWith(u8, raw, "type_view: {type: ```") and std.mem.endsWith(u8, raw, "```}");
-    const entry_point = std.mem.startsWith(u8, raw, "entry_point: \"") and std.mem.endsWith(u8, raw, "\"");
+    const entry_point = isEntryPoint(raw);
     return type_view or entry_point;
+}
+
+fn isEntryPoint(raw: []const u8) bool {
+    return std.mem.startsWith(u8, raw, "entry_point: \"") and std.mem.endsWith(u8, raw, "\"");
+}
+
+fn transformEntryPointToTarget(gpa: std.mem.Allocator, raw: []const u8) ![]const u8 {
+    std.debug.assert(isEntryPoint(raw));
+
+    const offset = (std.mem.indexOfScalar(u8, raw, '"') orelse return error.InvalidEntroypoint) + 1;
+    const len = std.mem.indexOfScalar(u8, raw[offset..], '"') orelse return error.InvalidEntroypoint;
+    const func_name = raw[offset .. offset + len];
+
+    // TODO: need to fill out `executable` and `working_directory` and maybe `arguments` and `enabled`
+    return gpa.print("target: {{ label: \"{0s}\", entry_point: \"{0s}\" }}", .{func_name});
 }
 
 const test_markup = "\x00type_view: {type: ```a```, expr: ```x```}\x00" ++
@@ -107,7 +127,7 @@ const test_markup = "\x00type_view: {type: ```a```, expr: ```x```}\x00" ++
 
 const test_block = begin_marker ++ "\n" ++
     "type_view: {type: ```a```, expr: ```x```}\n" ++
-    "entry_point: \"main.main\"\n" ++
+    "target: { label: \"main.main\", entry_point: \"main.main\" }\n" ++
     end_marker ++ "\n";
 
 fn testUpdate(existing: []const u8) ![]const u8 {
@@ -147,7 +167,7 @@ test "block is appended after content without a trailing newline" {
 // what raddbg writes back after opening the file. Comments are stripped and it formats the items
 const resaved_block = marker_key ++ " begin\n" ++
     "type_view:\n{\n  type: old\n  expr: \"rows($, gone)\"\n}\n" ++
-    "entry_point: old.main\n" ++
+    "target:\n{\n  label: old.main\n  entry_point: old.main\n}\n" ++
     marker_key ++ " end\n";
 
 test "a block rewritten by raddbg is replaced, not duplicated" {
