@@ -18,8 +18,6 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-    _ = b.addModule("raddbg_project", .{});
-
     // ---
 
     const mod_tests = b.addTest(.{
