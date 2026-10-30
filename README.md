@@ -1,4 +1,4 @@
-# Zig Rad debugger markup
+# Zig RAD Debugger markup
 
 Zig port of [raddbg_markup.h](https://github.com/EpicGames/raddebugger/blob/master/src/lib_raddbg_markup/raddbg_markup.h) for the [RAD Debugger](https://github.com/EpicGames/raddebugger).
 Allowing you to tell the debugger how to display certain types.
@@ -40,7 +40,7 @@ exe.root_module.addImport("raddbg", raddbg_dep.module("raddbg"));
 // --- optional ---
 
 // this allows you to use zig build debug to build your program and immediately open it in the debugger,
-// you can use `--auto_run` to also start it. See the RAD debugger `raddbg_readme.md` for more info.
+// you can use `--auto_run` to also start it. See the RAD Debugger `raddbg_readme.md` for more info.
 const debug_step = b.step("debug", "Run program in debugger");
 const debug_run = @import("raddbg").addDebugProgram(raddbg_dep, exe, null));
 // debug_run.addArg("--auto_run");
