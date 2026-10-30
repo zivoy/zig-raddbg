@@ -60,6 +60,8 @@ pub fn createProjectFile(raddbg_dep: *std.Build.Dependency, debugged_program: *s
     const run = owner.addRunArtifact(exe);
     run.addFileArg(markup.getOutput());
     run.addFileArg(project_file);
+    run.addFileArg(owner.path("."));
+    run.addFileArg(debugged_program.getEmittedBin());
     run.has_side_effects = true;
 
     return run;

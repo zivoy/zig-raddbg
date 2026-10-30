@@ -5,8 +5,8 @@ target:
 {
   label: someFunc
   entry_point: someFunc
-  working_directory: TODO
-  executable: TODO
+  working_directory: "../test"
+  executable: ".zig-cache/o/e98955817661aafb671b115d68812472/test"
   arguments: ""
   enabled: 1
 }

@@ -11,9 +11,11 @@ pub fn main(init: std.process.Init) !void {
     const arena = init.arena.allocator();
     const io = init.io;
     const args = try init.minimal.args.toSlice(arena);
-    if (args.len != 3) std.process.fatal("usage: raddbg_project <markup-file> <project-file>", .{});
+    if (args.len != 3 and args.len != 5) std.process.fatal("usage: raddbg_project <markup-file> <project-file> [cwd] [executable-path]", .{});
     const markup_file_path = args[1];
     const project_file_path = args[2];
+    const working_dir = if (args.len > 3) args[3] else "";
+    const exe_path = if (args.len > 3) args[4] else "";
 
     // input markup file is creatted by zig objcopy -j .raddbg -O binary ./ELF-FILE ./MARKUP-FILE.bin
 
@@ -28,8 +30,8 @@ pub fn main(init: std.process.Init) !void {
     const out = try update(arena, existing, markup, .{
         .enabled = true,
         .arguments = "",
-        .working_directory = "TODO",
-        .executable = "TODO",
+        .working_directory = working_dir,
+        .executable = exe_path,
     });
     if (std.mem.eql(u8, out, existing)) return;
 
