@@ -38,7 +38,11 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_mod_tests_llvm.step);
 }
 
-fn makeRaddbgProject(raddbg_project: *std.Build, debugged_program: *std.Build.Step.Compile, project_file: std.Build.LazyPath) *std.Build.Step.Run {
+fn getDefualtProjectFile(path: ?std.Build.LazyPath, b: *std.Build, program_name: []const u8) std.Build.LazyPath {
+    return path orelse b.path(b.fmt("{s}.raddbg_project", .{program_name}));
+}
+
+pub fn createProjectFile(raddbg_project: *std.Build, debugged_program: *std.Build.Step.Compile, project_file: std.Build.LazyPath) *std.Build.Step.Run {
     const owner = debugged_program.step.owner;
 
     const exe = raddbg_project.addExecutable(.{
@@ -60,21 +64,18 @@ fn makeRaddbgProject(raddbg_project: *std.Build, debugged_program: *std.Build.St
     return run;
 }
 
-fn getDefualtProjectFile(path: ?std.Build.LazyPath, b: *std.Build, program_name: []const u8) std.Build.LazyPath {
-    return path orelse b.path(b.fmt("{s}.raddbg_project", .{program_name}));
-}
-
 pub fn addProjectFile(raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile, path: ?std.Build.LazyPath) ?*std.Build.Step.Run {
     const target = program.rootModuleTarget();
     const owner = program.step.owner;
     if (target.ofmt != .elf) return null;
 
-    const run = makeRaddbgProject(raddbg_dep.builder, program, getDefualtProjectFile(path, owner, program.name));
+    const run = createProjectFile(raddbg_dep.builder, program, getDefualtProjectFile(path, owner, program.name));
     owner.getInstallStep().dependOn(&run.step);
     return run;
 }
 
 pub fn addDebugProgram(raddbg_dep: *std.Build.Dependency, program: *std.Build.Step.Compile, project_file: ?std.Build.LazyPath) *std.Build.Step.Run {
+    const target = program.rootModuleTarget();
     const owner = program.step.owner;
 
     const raddbg_prog = owner.findProgram(.{ .names = &.{"raddbg"} }) orelse {
@@ -86,9 +87,11 @@ pub fn addDebugProgram(raddbg_dep: *std.Build.Dependency, program: *std.Build.St
     const run_debugger = owner.addSystemCommand(&.{raddbg_prog});
 
     const project: ?std.Build.LazyPath = blk: {
-        const build_proj = addProjectFile(raddbg_dep, program, project_file) orelse break :blk null;
+        if (target.ofmt != .elf) break :blk null;
+        const proj_path = getDefualtProjectFile(project_file, owner, program.name);
+        const build_proj = createProjectFile(raddbg_dep.builder, program, proj_path);
         run_debugger.step.dependOn(&build_proj.step);
-        break :blk getDefualtProjectFile(project_file, owner, program.name);
+        break :blk proj_path;
     } orelse project_file;
 
     if (project != null) run_debugger.addFileArg2(project.?, .{ .prefix = "--project:" });
