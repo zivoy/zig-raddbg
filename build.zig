@@ -42,8 +42,9 @@ fn getDefualtProjectFile(path: ?std.Build.LazyPath, b: *std.Build, program_name:
     return path orelse b.path(b.fmt("{s}.raddbg_project", .{program_name}));
 }
 
-pub fn createProjectFile(raddbg_project: *std.Build, debugged_program: *std.Build.Step.Compile, project_file: std.Build.LazyPath) *std.Build.Step.Run {
+pub fn createProjectFile(raddbg_dep: *std.Build.Dependency, debugged_program: *std.Build.Step.Compile, project_file: std.Build.LazyPath) *std.Build.Step.Run {
     const owner = debugged_program.step.owner;
+    const raddbg_project = raddbg_dep.builder;
 
     const exe = raddbg_project.addExecutable(.{
         .name = "raddbg_project",
@@ -69,7 +70,7 @@ pub fn addProjectFile(raddbg_dep: *std.Build.Dependency, program: *std.Build.Ste
     const owner = program.step.owner;
     if (target.ofmt != .elf) return null;
 
-    const run = createProjectFile(raddbg_dep.builder, program, getDefualtProjectFile(path, owner, program.name));
+    const run = createProjectFile(raddbg_dep, program, getDefualtProjectFile(path, owner, program.name));
     owner.getInstallStep().dependOn(&run.step);
     return run;
 }
@@ -89,7 +90,7 @@ pub fn addDebugProgram(raddbg_dep: *std.Build.Dependency, program: *std.Build.St
     const project: ?std.Build.LazyPath = blk: {
         if (target.ofmt != .elf) break :blk null;
         const proj_path = getDefualtProjectFile(project_file, owner, program.name);
-        const build_proj = createProjectFile(raddbg_dep.builder, program, proj_path);
+        const build_proj = createProjectFile(raddbg_dep, program, proj_path);
         run_debugger.step.dependOn(&build_proj.step);
         break :blk proj_path;
     } orelse project_file;
