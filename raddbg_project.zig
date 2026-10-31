@@ -11,17 +11,21 @@ pub fn main(init: std.process.Init) !void {
     const arena = init.arena.allocator();
     const io = init.io;
     const args = try init.minimal.args.toSlice(arena);
-    if (args.len != 3 and args.len != 5) std.process.fatal("usage: raddbg_project <markup-file> <project-file> [cwd] [executable-path]", .{});
-    const markup_file_path = args[1];
+    if (args.len != 3 and args.len != 4) std.process.fatal("usage: raddbg_project <executable-file> <project-file> [cwd]", .{});
+    const elf_path = args[1];
     const project_file_path = args[2];
-    const working_dir = if (args.len > 3) args[3] else "";
-    const exe_path = if (args.len > 3) args[4] else "";
-
-    // input markup file is creatted by zig objcopy -j .raddbg -O binary ./ELF-FILE ./MARKUP-FILE.bin
+    const working_dir = if (args.len > 3) args[3] else blk: {
+        const buf = try arena.alloc(u8, 1024);
+        const len = try Io.Dir.realPath(.cwd(), init.io, buf);
+        break :blk buf[0..len];
+    };
 
     const cwd = Io.Dir.cwd();
-    const markup = cwd.readFileAlloc(io, markup_file_path, arena, .unlimited) catch |err|
-        std.process.fatal("failed to read {s}: {t}", .{ markup_file_path, err });
+
+    const elf_bytes = cwd.readFileAlloc(io, elf_path, arena, .unlimited) catch |err|
+        std.process.fatal("failed to read {s}: {t}", .{ elf_path, err });
+    const markup = try findSection(elf_bytes, ".raddbg") orelse return;
+
     const existing: []const u8 = cwd.readFileAlloc(io, project_file_path, arena, .unlimited) catch |err| switch (err) {
         error.FileNotFound => "",
         else => std.process.fatal("failed to read {s}: {t}", .{ project_file_path, err }),
@@ -31,7 +35,7 @@ pub fn main(init: std.process.Init) !void {
         .enabled = true,
         .arguments = "",
         .working_directory = working_dir,
-        .executable = exe_path,
+        .executable = elf_path,
     });
     if (std.mem.eql(u8, out, existing)) return;
 
@@ -136,6 +140,27 @@ fn transformEntryPointToTarget(gpa: std.mem.Allocator, raw: []const u8, info: En
         .{ func_name, info.working_directory, info.executable, info.arguments, @intFromBool(info.enabled) },
     );
 }
+
+fn findSection(elf_bytes: []const u8, wanted_name: []const u8) !?[]const u8 {
+    var reader: Io.Reader = .fixed(elf_bytes);
+    const header = try std.elf.Header.read(&reader);
+    if (header.shstrndx == std.elf.SHN_UNDEF) return null; // no section name table
+
+    var it = header.iterateSectionHeadersBuffer(elf_bytes);
+    it.index = header.shstrndx;
+    const names_header = (try it.next()).?;
+    const section_names = elf_bytes[names_header.sh_offset..][0..names_header.sh_size];
+
+    it.index = 0;
+    while (try it.next()) |section| {
+        if (section.sh_type == @backingInt(std.elf.SHT.NOBITS)) continue;
+        const name = std.mem.sliceTo(section_names[section.sh_name..], 0);
+        if (std.mem.eql(u8, name, wanted_name)) return elf_bytes[section.sh_offset..][0..section.sh_size];
+    }
+    return null;
+}
+
+// ---
 
 const test_markup = "\x00type_view: {type: ```a```, expr: ```x```}\x00" ++
     "N\x02junk\x00entry_point: \"main.main\"\x00" ++

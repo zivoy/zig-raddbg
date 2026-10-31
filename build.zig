@@ -53,13 +53,14 @@ pub fn createProjectFile(raddbg_dep: *std.Build.Dependency, debugged_program: *s
         }),
     });
 
-    const markup = raddbg_project.addObjCopy(debugged_program.getEmittedBin(), .{ .format = .binary, .only_section = ".raddbg" });
+    // not doing it in the build step because if the exe does not have a .raddbg section it fails the entire build.
+    // preferably I would rather just have it do nothing.
+    // const markup = raddbg_project.addObjCopy(debugged_program.getEmittedBin(), .{ .format = .binary, .only_section = ".raddbg" });
 
     const run = owner.addRunArtifact(exe);
-    run.addFileArg(markup.getOutput());
+    run.addFileArg(debugged_program.getEmittedBin());
     run.addFileArg(project_file);
     run.addFileArg(owner.path("."));
-    run.addFileArg(debugged_program.getEmittedBin());
     run.has_side_effects = true;
 
     run.setName("generate raddbg project file");
