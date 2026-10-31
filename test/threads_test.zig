@@ -7,6 +7,14 @@ const Stage = enum {
     colour,
 };
 
+const colours_u32 = [worker_count]u32{ 0xE06C75FF, 0x98C379FF, 0x61AFEFFF, 0xE5C07BFF };
+const colours_rgba = [worker_count][4]f32{
+    .{ 1, 0.4, 0.4, 1 },
+    .{ 0.4, 1, 0.4, 1 },
+    .{ 0.4, 0.4, 1, 1 },
+    .{ 1, 1, 0.4, 0.5 }, // fractional alpha, the C macro casts `a` before scaling so it would be 0 there
+};
+
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
 
@@ -20,9 +28,29 @@ pub fn main(init: std.process.Init) !void {
     gate.run(io, .name);
     checkpoint();
 
+    raddbg.log("--- thread name id ---", .{});
+    for (gate.ids, 0..) |id, index| raddbg.threadIdName(id, "remote {d}", .{index});
+    raddbg.threadIdName(raddbg.threadId(), "main by id", .{});
+    raddbg.log("threads named by main", .{});
+    checkpoint();
+
     raddbg.log("--- thread colour ---", .{});
     raddbg.threadColorRgba(1, 1, 1, 1);
     gate.run(io, .colour);
+    checkpoint();
+
+    raddbg.log("--- thread colour id ---", .{});
+    for (gate.ids, 0..) |id, index| {
+        // opposite polarity; odd workers use the u32 palette, even workers the rgba palette
+        if (index % 2 == 1) {
+            raddbg.threadIdColorU32(id, colours_u32[index]);
+        } else {
+            const c = colours_rgba[index];
+            raddbg.threadIdColorRgba(id, c[0], c[1], c[2], c[3]);
+        }
+    }
+    raddbg.threadIdColorU32(raddbg.threadId(), 0xffffffff);
+    raddbg.log("threads coloured by main", .{});
     checkpoint();
 
     gate.quit.set(io);
@@ -96,14 +124,6 @@ fn nameSelf(index: usize) void {
 }
 
 fn colourSelf(index: usize) void {
-    const colours_u32 = [worker_count]u32{ 0xE06C75FF, 0x98C379FF, 0x61AFEFFF, 0xE5C07BFF };
-    const colours_rgba = [worker_count][4]f32{
-        .{ 1, 0.4, 0.4, 1 },
-        .{ 0.4, 1, 0.4, 1 },
-        .{ 0.4, 0.4, 1, 1 },
-        .{ 1, 1, 0.4, 0.5 }, // fractional alpha, the C macro casts `a` before scaling so it would be 0 there
-    };
-
     // even workers use the u32 palette, odd workers the rgba palette
     if (index % 2 == 0) {
         raddbg.threadColorU32(colours_u32[index]);
