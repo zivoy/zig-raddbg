@@ -315,13 +315,13 @@ const win32 = if (win32_enabled) struct {
         load_module = 0x00524157,
     };
 
-    const DWORD = u32;
-    const BOOL = i32;
+    const DWORD = std.os.windows.DWORD;
+    const BOOL = std.os.windows.BOOL;
     const HRESULT = i32;
-    const HANDLE = *anyopaque;
-    const HMODULE = *opaque {};
-    const LPCWSTR = [*:0]const u16;
-    const FARPROC = *const fn () callconv(.winapi) isize;
+    const HANDLE = std.os.windows.HANDLE;
+    const HMODULE = std.os.windows.HMODULE;
+    const LPCWSTR = std.os.windows.LPCWSTR;
+    const FARPROC = std.os.windows.FARPROC;
 
     extern "kernel32" fn GetModuleHandleA(name: ?[*:0]const u8) callconv(.winapi) ?HMODULE;
     extern "kernel32" fn GetProcAddress(module: HMODULE, name: [*:0]const u8) callconv(.winapi) ?FARPROC;
