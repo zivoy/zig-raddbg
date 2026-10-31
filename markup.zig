@@ -112,7 +112,7 @@ pub inline fn breakpoint() void {
 
 /// Equivalent of `raddbg_break_if(expr)`: stops in the debugger at this point if `condition` is true
 pub inline fn breakpointIf(condition: bool) void {
-    if (condition) breakpoint();
+    if (enabled and condition) @breakpoint();
 }
 
 /// Equivalent of `raddbg_watch(fmt, ...)`: adds an expression to the debugger's watch window.
