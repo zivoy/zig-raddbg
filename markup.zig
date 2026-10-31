@@ -80,7 +80,7 @@ pub fn threadIdName(id: std.Thread.Id, comptime fmt: []const u8, args: anytype) 
                 } else |_| {}
             }
             // every windows debugger understands this code, but nothing catches it without one
-            if (win32.IsDebuggerPresent() != 0) win32.raise(.thread_name, &.{ 0x1000, @intFromPtr(name.ptr), id });
+            if (win32.IsDebuggerPresent().toBool()) win32.raise(.thread_name, &.{ 0x1000, @intFromPtr(name.ptr), id });
         },
         else => {},
     }
