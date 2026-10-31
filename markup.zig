@@ -98,7 +98,7 @@ pub fn threadColorRgba(r: f32, g: f32, b: f32, a: f32) void {
 
 /// Equivalent of `raddbg_thread_id_color_u32(id, u32)`: colours the thread with the given id in the debugger, `0xRRGGBBAA`
 pub fn threadIdColorU32(id: std.Thread.Id, rgba: u32) void {
-    // if (!enabled) return;
+    if (!enabled) return;
     // if (builtin.os.tag != .windows) return; // not available on linux
     if (!notifiable()) return;
     win32.raise(.thread_color, &.{ id, rgba });
@@ -154,20 +154,26 @@ pub const Access = packed struct {
 
 /// Equivalent of `raddbg_add_breakpoint(ptr, size, r, w, x)`: breaks on the given accesses of `size` bytes at `ptr`
 pub fn addBreakpoint(ptr: *const anyopaque, size: usize, access: Access) void {
-    if (builtin.os.tag != .windows) return; // not available on linux
-    _ = ptr; // autofix
-    _ = size; // autofix
-    _ = access; // autofix
-    @panic("TODO: raddbg addBreakpoint");
+    setBreakpoint(ptr, size, access, true);
 }
 
 /// Equivalent of `raddbg_remove_breakpoint(ptr, size, r, w, x)`: removes a breakpoint made with `addBreakpoint`
 pub fn removeBreakpoint(ptr: *const anyopaque, size: usize, access: Access) void {
-    if (builtin.os.tag != .windows) return; // not available on linux
-    _ = ptr; // autofix
-    _ = size; // autofix
-    _ = access; // autofix
-    @panic("TODO: raddbg removeBreakpoint");
+    setBreakpoint(ptr, size, access, false);
+}
+
+fn setBreakpoint(ptr: *const anyopaque, size: usize, access: Access, add: bool) void {
+    if (!enabled) return;
+    // if (builtin.os.tag != .windows) return; // not available on linux
+    if (!notifiable()) return;
+    win32.raise(.breakpoint, &.{
+        @intFromPtr(ptr),
+        size,
+        @intFromBool(access.read),
+        @intFromBool(access.write),
+        @intFromBool(access.execute),
+        @intFromBool(add),
+    });
 }
 
 /// Equivalent of `raddbg_annotate_vaddr_range(ptr, size, fmt, ...)`: labels `size` bytes at `ptr` in the debugger
