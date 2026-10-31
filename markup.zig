@@ -98,19 +98,15 @@ pub fn threadColorRgba(r: f32, g: f32, b: f32, a: f32) void {
 
 /// Equivalent of `raddbg_thread_id_color_u32(id, u32)`: colours the thread with the given id in the debugger, `0xRRGGBBAA`
 pub fn threadIdColorU32(id: std.Thread.Id, rgba: u32) void {
-    _ = id; // autofix
-    _ = rgba; // autofix
-    @panic("TODO: raddbg threadIdColorU32");
+    // if (!enabled) return;
+    // if (builtin.os.tag != .windows) return; // not available on linux
+    if (!notifiable()) return;
+    win32.raise(.thread_color, &.{ id, rgba });
 }
 
 /// Equivalent of `raddbg_thread_id_color_rgba(id, r, g, b, a)`: colours the thread with the given id in the debugger, each channel is 0 to 1
 pub fn threadIdColorRgba(id: std.Thread.Id, r: f32, g: f32, b: f32, a: f32) void {
-    _ = id; // autofix
-    _ = r; // autofix
-    _ = g; // autofix
-    _ = b; // autofix
-    _ = a; // autofix
-    @panic("TODO: raddbg threadIdColorRgba");
+    threadIdColorU32(id, Rgba.pack(r, g, b, a));
 }
 
 /// Equivalent of `raddbg_break()`: stops in the debugger at this point
@@ -284,6 +280,23 @@ fn bufPrintTruncateZ(buffer: []u8, comptime fmt: []const u8, args: anytype) [:0]
     };
 }
 
+/// `0xRRGGBBAA`
+const Rgba = packed struct(u32) {
+    a: u8,
+    b: u8,
+    g: u8,
+    r: u8,
+
+    pub fn channel(value: f32) u8 {
+        return @intFromFloat(std.math.clamp(value, 0, 1) * 255);
+    }
+
+    pub fn pack(r: f32, g: f32, b: f32, a: f32) u32 {
+        const rgba: Rgba = .{ .r = channel(r), .g = channel(g), .b = channel(b), .a = channel(a) };
+        return @bitCast(rgba);
+    }
+};
+
 // ---
 
 const win32_enabled = builtin.os.tag == .windows and @sizeOf(usize) == @sizeOf(u64) and enabled;
@@ -427,4 +440,12 @@ test "the is-attached marker is one writable byte in .rdbgia" {
 
 test "default views compile" {
     comptime std_views.registerDefaults();
+}
+
+test "packRgba matches the C macro for r, g, b" {
+    try testing.expectEqual(0xffffffff, Rgba.pack(1, 1, 1, 1));
+    try testing.expectEqual(0x00000000, Rgba.pack(0, 0, 0, 0));
+    try testing.expectEqual(0xff6666ff, Rgba.pack(1, 0.4, 0.4, 1));
+    try testing.expectEqual(0xffff667f, Rgba.pack(1, 1, 0.4, 0.5));
+    try testing.expectEqual(0xff0000ff, Rgba.pack(2, -1, 0, 1)); // clamped
 }
