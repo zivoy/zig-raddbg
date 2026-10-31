@@ -70,8 +70,6 @@ pub fn threadIdName(id: std.Thread.Id, comptime fmt: []const u8, args: anytype) 
         .windows => @panic("TODO: SetThreadDescription + 0x406D1388 exception"),
         else => @compileError("Unsuported target"),
     }
-
-    log("thread ({d}) wannts to be called: {s}", .{ id, name });
 }
 
 /// Equivalent of `raddbg_thread_color_u32(u32)`: colours the calling thread in the debugger, `0xRRGGBBAA`
