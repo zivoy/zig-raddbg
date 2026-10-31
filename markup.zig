@@ -178,12 +178,13 @@ fn setBreakpoint(ptr: *const anyopaque, size: usize, access: Access, add: bool) 
 
 /// Equivalent of `raddbg_annotate_vaddr_range(ptr, size, fmt, ...)`: labels `size` bytes at `ptr` in the debugger
 pub fn annotateVaddrRange(ptr: *const anyopaque, size: usize, comptime fmt: []const u8, args: anytype) void {
-    if (builtin.os.tag != .windows) return; // not available on linux
-    _ = ptr; // autofix
-    _ = size; // autofix
-    _ = fmt; // autofix
-    _ = args; // autofix
-    @panic("TODO: raddbg annotateVaddrRange");
+    if (!enabled) return;
+    // if (builtin.os.tag != .windows) return; // not available on linux
+    if (!notifiable()) return;
+
+    var buf: [4096]u8 = undefined;
+    const label = bufPrintTruncateZ(&buf, fmt, args);
+    win32.raise(.annotate_vaddr_range, &.{ @intFromPtr(ptr), size, @intFromPtr(label.ptr), label.len });
 }
 
 /// Equivalent of `raddbg_load_module(ptr, size, name, dbg_path)`: tells the debugger a module is loaded at `ptr`, with its debug info at `dbg_path`
