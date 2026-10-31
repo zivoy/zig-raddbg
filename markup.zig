@@ -329,17 +329,19 @@ const win32 = if (win32_enabled) struct {
     const HRESULT = i32;
     const HANDLE = std.os.windows.HANDLE;
     const HMODULE = std.os.windows.HMODULE;
+    const LPCSTR = std.os.windows.LPCSTR;
     const LPCWSTR = std.os.windows.LPCWSTR;
     const FARPROC = std.os.windows.FARPROC;
+    const ULONG_PTR = std.os.windows.ULONG_PTR;
 
-    extern "kernel32" fn GetModuleHandleA(name: ?[*:0]const u8) callconv(.winapi) ?HMODULE;
-    extern "kernel32" fn GetProcAddress(module: HMODULE, name: [*:0]const u8) callconv(.winapi) ?FARPROC;
+    extern "kernel32" fn GetModuleHandleA(lpModuleName: ?LPCSTR) callconv(.winapi) ?HMODULE;
+    extern "kernel32" fn GetProcAddress(hModule: HMODULE, lpProcName: LPCSTR) callconv(.winapi) ?FARPROC;
     extern "kernel32" fn GetCurrentThread() callconv(.winapi) HANDLE;
     extern "kernel32" fn IsDebuggerPresent() callconv(.winapi) BOOL;
-    extern "kernel32" fn RaiseException(code: DWORD, flags: DWORD, nargs: DWORD, args: ?[*]const usize) callconv(.winapi) void;
-    extern "kernel32" fn OutputDebugStringA(str: [*:0]const u8) callconv(.winapi) void;
+    extern "kernel32" fn RaiseException(dwExceptionCode: DWORD, dwExceptionFlags: DWORD, nNumberOfArguments: DWORD, lpArguments: [*c]const ULONG_PTR) callconv(.winapi) void;
+    extern "kernel32" fn OutputDebugStringA(lpOutputString: ?LPCSTR) callconv(.winapi) void;
 
-    const SetThreadDescriptionFn = *const fn (HANDLE, LPCWSTR) callconv(.winapi) HRESULT;
+    const SetThreadDescriptionFn = *const fn (hThread: HANDLE, lpThreadDescription: LPCWSTR) callconv(.winapi) HRESULT;
 
     const unresolved = 0;
     const missing = 1;
