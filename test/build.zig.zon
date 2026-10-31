@@ -14,5 +14,6 @@
         "build.zig.zon",
         "test.zig",
         "types_test.zig",
+        "threads_test.zig",
     },
 }

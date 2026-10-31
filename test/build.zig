@@ -41,6 +41,20 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(types_exe);
 
+    const threads_exe = b.addExecutable(.{
+        .name = "threads_test",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("threads_test.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "raddbg", .module = raddbg_dep.module("raddbg") },
+            },
+        }),
+        .use_llvm = true,
+    });
+    b.installArtifact(threads_exe);
+
     const debug_step = b.step("debug", "Run program in debugger");
     const debug_run = raddbg.addDebugProgram(raddbg_dep, test_exe, .{ .project = b.path("./test.raddbg_project") });
     debug_step.dependOn(&debug_run.step);
@@ -50,4 +64,8 @@ pub fn build(b: *std.Build) void {
         .auto_run = true,
     });
     debug_types_step.dependOn(&debug_types_run.step);
+
+    const debug_threads_step = b.step("debug-threads", "Run thread test in debugger");
+    const debug_threads_run = raddbg.addDebugProgram(raddbg_dep, threads_exe, .{ .auto_run = true });
+    debug_threads_step.dependOn(&debug_threads_run.step);
 }
