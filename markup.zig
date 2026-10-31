@@ -273,6 +273,17 @@ fn bufPrintTruncateZ(buffer: []u8, comptime fmt: []const u8, args: anytype) [:0]
 // ---
 
 const win32 = if (builtin.os.tag == .windows and enabled) struct {
+    pub const ExceptionCode = enum(DWORD) {
+        thread_name = 0x406D1388,
+        thread_color = 0x00524144,
+        breakpoint = 0x00524145,
+        annotate_vaddr_range = 0x00524156,
+        load_module = 0x00524157,
+        _,
+    };
+
+    const DWORD = u32;
+    extern "kernel32" fn RaiseException(code: DWORD, flags: DWORD, nargs: DWORD, args: ?[*]const usize) callconv(.winapi) void;
     extern "kernel32" fn OutputDebugStringA(str: [*:0]const u8) callconv(.winapi) void;
 } else struct {};
 
