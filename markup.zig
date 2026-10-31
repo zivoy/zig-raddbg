@@ -285,6 +285,14 @@ const win32 = if (builtin.os.tag == .windows and enabled) struct {
     const DWORD = u32;
     extern "kernel32" fn RaiseException(code: DWORD, flags: DWORD, nargs: DWORD, args: ?[*]const usize) callconv(.winapi) void;
     extern "kernel32" fn OutputDebugStringA(str: [*:0]const u8) callconv(.winapi) void;
+
+    // ---
+
+    pub fn raise(code: ExceptionCode, info: anytype) void {
+        const T = @TypeOf(info.*);
+        comptime std.debug.assert(@sizeOf(T) % @sizeOf(usize) == 0);
+        RaiseException(@backingInt(code), 0, @sizeOf(T) / @sizeOf(usize), @ptrCast(@alignCast(info)));
+    }
 } else struct {};
 
 // ---
