@@ -188,12 +188,10 @@ pub fn annotateVaddrRange(ptr: *const anyopaque, size: usize, comptime fmt: []co
 
 /// Equivalent of `raddbg_load_module(ptr, size, name, dbg_path)`: tells the debugger a module is loaded at `ptr`, with its debug info at `dbg_path`
 pub fn loadModule(ptr: *const anyopaque, size: usize, name: [*:0]const u8, dbg_path: [*:0]const u8) void {
-    if (builtin.os.tag != .windows) return; // not available on linux
-    _ = ptr; // autofix
-    _ = size; // autofix
-    _ = name; // autofix
-    _ = dbg_path; // autofix
-    @panic("TODO: raddbg loadModule");
+    if (!enabled) return;
+    // if (builtin.os.tag != .windows) return; // not available on linux
+    if (!notifiable()) return;
+    win32.raise(.load_module, &.{ @intFromPtr(ptr), size, @intFromPtr(name), @intFromPtr(dbg_path) });
 }
 
 // ---
