@@ -15,52 +15,52 @@ pub fn registerDefaults() void {
 }
 
 pub fn slices() void {
-    raddbg.typeView("[]?", "array(ptr, len)");
-    raddbg.typeView("[:?]?", "array(ptr, len)");
+    raddbg.typeView("[]?", "array($.ptr, $.len)");
+    raddbg.typeView("[:?]?", "array($.ptr, $.len)");
 }
 
 pub fn arrayLists() void {
-    raddbg.typeView("array_list.Aligned(?)", "rows($, items, items.len, capacity)");
-    raddbg.typeView("array_list.AlignedManaged(?)", "rows($, items, items.len, capacity)");
+    raddbg.typeView("array_list.Aligned(?)", "rows($, $.items, $.items.len, $.capacity)");
+    raddbg.typeView("array_list.AlignedManaged(?)", "rows($, $.items, $.items.len, $.capacity)");
 }
 
 pub fn misc() void {
     // we cant register ?[]const u8 (pre and build), because the ? is the catch all, so nullable types have this issues
-    raddbg.typeView(std.SemanticVersion, "rows($, major, minor, patch, pre = array(pre.ptr, pre.len), build = array(build.ptr, build.len))");
+    raddbg.typeView(std.SemanticVersion, "rows($, $.major, $.minor, $.patch, pre = array($.pre.ptr, $.pre.len), build = array($.build.ptr, $.build.len))");
 }
 
 pub fn queues() void {
-    raddbg.typeView("priority_queue.PriorityQueue(?)", "rows($, items, items.len, cap)");
-    raddbg.typeView("priority_dequeue.PriorityDequeue(?)", "rows($, heap = array(items.ptr, len), len, cap = items.len)");
+    raddbg.typeView("priority_queue.PriorityQueue(?)", "rows($, $.items, $.items.len, $.cap)");
+    raddbg.typeView("priority_dequeue.PriorityDequeue(?)", "rows($, heap = array($.items.ptr, $.len), $.len, cap = $.items.len)");
 
-    const deque_front = "(head + len > buffer.len ? buffer.len - head : len)";
+    const deque_front = "($.head + $.len > $.buffer.len ? $.buffer.len - $.head : $.len)";
     const deque_view = "rows($, " ++
-        "front = array(buffer.ptr + head, " ++ deque_front ++ "), " ++
-        "wrapped = array(buffer.ptr, len - " ++ deque_front ++ "), " ++
-        "head, len)";
+        "front = array($.buffer.ptr + $.head, " ++ deque_front ++ "), " ++
+        "wrapped = array($.buffer.ptr, $.len - " ++ deque_front ++ "), " ++
+        "$.head, $.len)";
     raddbg.typeView("deque.Deque(?)", deque_view);
 }
 
 pub fn hashMaps() void {
-    raddbg.typeView("array_hash_map.Custom(?)", "rows($, count = entries.len, capacity = entries.capacity, index_header, storage = array(entries.bytes,entries.len))");
+    raddbg.typeView("array_hash_map.Custom(?)", "rows($, count = $.entries.len, capacity = $.entries.capacity, $.index_header, storage = array($.entries.bytes, $.entries.len))");
 
-    raddbg.typeView("hash_map.Custom(?,80)", hashMapView(""));
-    raddbg.typeView("hash_map.HashMap(?,80)", hashMapView("unmanaged."));
-    raddbg.typeView(std.BufMap, hashMapView("hash_map.unmanaged."));
-    raddbg.typeView(std.BufSet, hashMapView("hash_map.unmanaged."));
+    raddbg.typeView("hash_map.Custom(?,80)", hashMapView("$."));
+    raddbg.typeView("hash_map.HashMap(?,80)", hashMapView("$.unmanaged."));
+    raddbg.typeView(std.BufMap, hashMapView("$.hash_map.unmanaged."));
+    raddbg.typeView(std.BufSet, hashMapView("$.hash_map.unmanaged."));
 }
 
 pub fn bitSets() void {
-    raddbg.typeView("bit_set.Integer(?)", "bin(bits)");
-    raddbg.typeView("bit_set.Array(?)", "bin(masks)");
-    raddbg.typeView(std.bit_set.Dynamic, "rows($, bit_length, bin(array(masks, (bit_length + 63) / 64)))");
-    raddbg.typeView(std.bit_set.DynamicManaged, "unmanaged");
+    raddbg.typeView("bit_set.Integer(?)", "bin($.bits)");
+    raddbg.typeView("bit_set.Array(?)", "bin($.masks)");
+    raddbg.typeView(std.bit_set.Dynamic, "rows($, $.bit_length, bin(array($.masks, ($.bit_length + 63) / 64)))");
+    raddbg.typeView(std.bit_set.DynamicManaged, "$.unmanaged");
 }
 
 pub fn enumContainers() void {
-    raddbg.typeView("enums.EnumSet(?)", "bin(bits.bits)");
-    raddbg.typeView("enums.EnumMap(?)", "rows($, values, bin(bits.bits))");
-    raddbg.typeView("enums.EnumArray(?)", "no_char(values)");
+    raddbg.typeView("enums.EnumSet(?)", "bin($.bits.bits)");
+    raddbg.typeView("enums.EnumMap(?)", "rows($, $.values, bin($.bits.bits))");
+    raddbg.typeView("enums.EnumArray(?)", "no_char($.values)");
 }
 
 pub fn multiArrayListOf(comptime T: type) void {
@@ -74,23 +74,23 @@ pub fn multiArrayListOf(comptime T: type) void {
         rows = rows ++ std.fmt.comptimePrint(", {s} = memory($.bytes + $.capacity * {d}, size = $.len * {d})", .{ info.field_names[column.field], column.offset, size });
     }
 
-    raddbg.typeView(std.MultiArrayList(T), "rows($, len, capacity, bytes" ++ rows ++ ")");
+    raddbg.typeView(std.MultiArrayList(T), "rows($, $.len, $.capacity, $.bytes" ++ rows ++ ")");
 }
 
 pub fn linkedLists() void {
-    raddbg.typeView(std.SinglyLinkedList, "list(first, next)");
-    raddbg.typeView(std.DoublyLinkedList, "list(first, next)");
+    raddbg.typeView(std.SinglyLinkedList, "list($.first, $.next)");
+    raddbg.typeView(std.DoublyLinkedList, "list($.first, $.next)");
 }
 
 pub fn io() void {
-    raddbg.typeView(std.Io.Writer, "array(buffer.ptr, end)");
-    raddbg.typeView(std.Io.Reader, "array(buffer.ptr + seek, end - seek)");
-    raddbg.typeView(std.Io.Writer.Allocating, "writer");
+    raddbg.typeView(std.Io.Writer, "array($.buffer.ptr, $.end)");
+    raddbg.typeView(std.Io.Reader, "array($.buffer.ptr + $.seek, $.end - $.seek)");
+    raddbg.typeView(std.Io.Writer.Allocating, "$.writer");
 }
 
 pub fn errors() void {
-    raddbg.typeView("error{?}!?", "rows($, error, payload)");
-    raddbg.typeView("anyerror!?", "rows($, error, payload)");
+    raddbg.typeView("error{?}!?", "rows($, $.error, $.payload)");
+    raddbg.typeView("anyerror!?", "rows($, $.error, $.payload)");
 }
 
 // cant really register optional, since `?` is the wildcard, but it should be fine, a `?T` is just struct that has `{ payload, some }` and a `?[]T` is an array that can have its ptr be 0
