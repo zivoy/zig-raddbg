@@ -49,7 +49,7 @@ pub fn main(init: std.process.Init) !void {
             raddbg.threadIdColorRgba(id, c[0], c[1], c[2], c[3]);
         }
     }
-    raddbg.threadIdColorU32(raddbg.threadId(), 0xffffffff);
+    raddbg.threadIdColorU32(raddbg.threadId(), 0x7A7A7A7A);
     raddbg.log("threads coloured by main", .{});
     checkpoint();
 
