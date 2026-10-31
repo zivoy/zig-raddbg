@@ -137,7 +137,7 @@ pub fn pin(comptime expr: []const u8, args: anytype) void {
 /// Equivalent of `raddbg_log(fmt, ...)`: writes to the debugger's log
 pub fn log(comptime fmt: []const u8, args: anytype) void {
     if (!enabled) return;
-    if (builtin.os.tag != .windows) return std.log.scoped(.raddbg).info(fmt, args);
+    if (!win32_enabled) return std.log.scoped(.raddbg).info(fmt, args);
 
     var buf: [4096]u8 = undefined;
     const msg = bufPrintTruncateZ(&buf, fmt, args);
