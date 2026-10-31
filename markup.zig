@@ -10,12 +10,6 @@ const markup_enabled = !(@hasDecl(root, "raddbg_markup_stubs") and root.raddbg_m
 
 pub const enabled = markup_enabled and options.enabled;
 
-// shared allocator for doing formatting, only non existent when disabled at build
-const buffer_len = if (options.enabled) options.buffer_size else 0;
-var shared_buffer: [buffer_len]u8 = undefined;
-var fba = std.heap.FixedBufferAllocator.init(&shared_buffer);
-const salloc = fba.threadSafeAllocator();
-
 /// Equivalent of `raddbg_type_view(type, expr)`: tells the debugger how to visualize a type.
 /// `T` can be a zig type or a string pattern
 pub fn typeView(comptime T: anytype, comptime expr: []const u8) void {
@@ -62,10 +56,20 @@ pub fn threadName(comptime fmt: []const u8, args: anytype) void {
 pub fn threadIdName(id: std.Thread.Id, comptime fmt: []const u8, args: anytype) void {
     if (!enabled) return;
 
-    // const name = salloc.printSentinel(fmt, args, 0) catch unreachable;
-    const name_buf = salloc.allocSentinel(u8, 511, 0) catch unreachable;
-    defer salloc.free(name_buf);
-    const name = std.mem.printSentinel(name_buf, fmt, args, 0) catch name_buf;
+    var buf: [512]u8 = undefined;
+    const name = bufPrintTruncateZ(&buf, fmt, args);
+
+    switch (builtin.os.tag) {
+        .linux => {
+            var path_buffer: [64]u8 = undefined;
+            const path = std.fmt.bufPrint(&path_buffer, "/proc/self/task/{d}/comm", .{id}) catch return;
+            const io = std.Io.Threaded.global_single_threaded.io();
+            // kernel limit is 15 bytes + NUL
+            std.Io.Dir.cwd().writeFile(io, .{ .sub_path = path, .data = name[0..@min(name.len, 15)] }) catch {};
+        },
+        .windows => @panic("TODO: SetThreadDescription + 0x406D1388 exception"),
+        else => @compileError("Unsuported target"),
+    }
 
     log("thread ({d}) wannts to be called: {s}", .{ id, name });
 }
@@ -257,6 +261,13 @@ fn hasTracer(status: []const u8) bool {
     const start = std.mem.indexOf(u8, status, key) orelse return false;
     const value = std.mem.trim(u8, status[start + key.len ..], " \t");
     return value.len > 0 and value[0] != '0';
+}
+
+fn bufPrintTruncateZ(buffer: []u8, comptime fmt: []const u8, args: anytype) [:0]const u8 {
+    return std.mem.printSentinel(buffer, fmt, args, 0) catch blk: {
+        buffer[buffer.len - 1] = 0;
+        break :blk buffer[0 .. buffer.len - 1 :0];
+    };
 }
 
 // ---

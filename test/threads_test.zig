@@ -20,6 +20,8 @@ pub fn main(init: std.process.Init) !void {
     joinAll(threads);
 
     // ---
+
+    std.debug.print("done\n", .{});
 }
 
 fn checkpoint() void {
