@@ -306,7 +306,7 @@ const Rgba = packed struct(u32) {
 const win32_enabled = builtin.os.tag == .windows and @sizeOf(usize) == @sizeOf(u64) and enabled;
 
 /// debug codes only for a present raddbg
-fn notifiable() bool {
+inline fn notifiable() bool {
     return win32_enabled and isAttached();
 }
 
