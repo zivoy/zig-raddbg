@@ -71,7 +71,7 @@ pub fn multiArrayListOf(comptime T: type) void {
         if (size == 0) continue;
 
         // there are some issues with raddbg, so I can't cast to the correct type and use array, so for now it will be be memory
-        rows = rows ++ std.fmt.comptimePrint(", {s} = memory(bytes + capacity * {d}, size = len * {d})", .{ info.field_names[column.field], column.offset, size });
+        rows = rows ++ std.fmt.comptimePrint(", {s} = memory($.bytes + $.capacity * {d}, size = $.len * {d})", .{ info.field_names[column.field], column.offset, size });
     }
 
     raddbg.typeView(std.MultiArrayList(T), "rows($, len, capacity, bytes" ++ rows ++ ")");
