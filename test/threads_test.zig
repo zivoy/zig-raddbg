@@ -7,17 +7,33 @@ pub fn main(init: std.process.Init) !void {
 
     std.debug.print("debugger is {s}\n", .{if (raddbg.isAttached()) "attached" else "not attached"});
 
-    var gate: Gate = .{};
-
-    // ---
+    // --- name
+    raddbg.log("--- thread name ---", .{});
 
     raddbg.threadName("main", .{});
 
-    const threads = try spawnWorkers(nameSelf, io, &gate);
-    gate.waitAll(io);
-    checkpoint();
-    gate.release(io);
-    joinAll(threads);
+    {
+        var gate: Gate = .{};
+        const threads = try spawnWorkers(nameSelf, io, &gate);
+        gate.waitAll(io);
+        checkpoint();
+        gate.release(io);
+        joinAll(threads);
+    }
+
+    // --- colour
+    raddbg.log("--- thread colour ---", .{});
+
+    raddbg.threadColorRgba(1, 1, 1, 1);
+
+    {
+        var gate: Gate = .{};
+        const threads = try spawnWorkers(colorSelf, io, &gate);
+        gate.waitAll(io);
+        checkpoint();
+        gate.release(io);
+        joinAll(threads);
+    }
 
     // ---
 
@@ -83,6 +99,26 @@ fn nameSelf(io: Io, gate: *Gate, index: usize) void {
         },
         else => raddbg.threadName("worker {d}", .{index}),
     }
-    raddbg.log("worker {d} (id {d}) named itself", .{ index, raddbg.threadId() });
+    raddbg.log("worker {d} (id {d}) named itself\n", .{ index, raddbg.threadId() });
+    gate.arrive(io, index);
+}
+
+fn colorSelf(io: Io, gate: *Gate, index: usize) void {
+    const colours_u32 = [worker_count]u32{ 0xE06C75FF, 0x98C379FF, 0x61AFEFFF, 0xE5C07BFF };
+    const colours_rgba = [worker_count][4]f32{
+        .{ 1, 0.4, 0.4, 1 },
+        .{ 0.4, 1, 0.4, 1 },
+        .{ 0.4, 0.4, 1, 1 },
+        .{ 1, 1, 0.4, 0.5 }, // fractional alpha, the C macro casts `a` before scaling so it would be 0 there
+    };
+
+    // even workers use the u32 palette, odd workers the rgba palette
+    if (index % 2 == 0) {
+        raddbg.threadColorU32(colours_u32[index]);
+    } else {
+        const c = colours_rgba[index];
+        raddbg.threadColorRgba(c[0], c[1], c[2], c[3]);
+    }
+    raddbg.log("worker {d} (id {d}) coloured itself\n", .{ index, raddbg.threadId() });
     gate.arrive(io, index);
 }
