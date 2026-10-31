@@ -141,6 +141,7 @@ pub const Access = packed struct {
 
 /// Equivalent of `raddbg_add_breakpoint(ptr, size, r, w, x)`: breaks on the given accesses of `size` bytes at `ptr`
 pub fn addBreakpoint(ptr: *const anyopaque, size: usize, access: Access) void {
+    if (builtin.os.tag != .windows) return; // not available on linux
     _ = ptr; // autofix
     _ = size; // autofix
     _ = access; // autofix
@@ -149,6 +150,7 @@ pub fn addBreakpoint(ptr: *const anyopaque, size: usize, access: Access) void {
 
 /// Equivalent of `raddbg_remove_breakpoint(ptr, size, r, w, x)`: removes a breakpoint made with `addBreakpoint`
 pub fn removeBreakpoint(ptr: *const anyopaque, size: usize, access: Access) void {
+    if (builtin.os.tag != .windows) return; // not available on linux
     _ = ptr; // autofix
     _ = size; // autofix
     _ = access; // autofix
@@ -157,6 +159,7 @@ pub fn removeBreakpoint(ptr: *const anyopaque, size: usize, access: Access) void
 
 /// Equivalent of `raddbg_annotate_vaddr_range(ptr, size, fmt, ...)`: labels `size` bytes at `ptr` in the debugger
 pub fn annotateVaddrRange(ptr: *const anyopaque, size: usize, comptime fmt: []const u8, args: anytype) void {
+    if (builtin.os.tag != .windows) return; // not available on linux
     _ = ptr; // autofix
     _ = size; // autofix
     _ = fmt; // autofix
@@ -166,6 +169,7 @@ pub fn annotateVaddrRange(ptr: *const anyopaque, size: usize, comptime fmt: []co
 
 /// Equivalent of `raddbg_load_module(ptr, size, name, dbg_path)`: tells the debugger a module is loaded at `ptr`, with its debug info at `dbg_path`
 pub fn loadModule(ptr: *const anyopaque, size: usize, name: [*:0]const u8, dbg_path: [*:0]const u8) void {
+    if (builtin.os.tag != .windows) return; // not available on linux
     _ = ptr; // autofix
     _ = size; // autofix
     _ = name; // autofix

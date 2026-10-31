@@ -25,6 +25,7 @@ pub fn main(init: std.process.Init) void {
     const attached = raddbg.isAttached();
 
     std.debug.print("debugger is {s}\n", .{if (attached) "attached" else "not attached"});
+    if (attached) raddbg.log("hello debugger", .{});
 
     var al: std.ArrayList(u8) = .empty;
     al.appendSlice(allocator, "hi") catch unreachable;
