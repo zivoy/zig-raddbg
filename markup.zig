@@ -10,6 +10,12 @@ const markup_enabled = !(@hasDecl(root, "raddbg_markup_stubs") and root.raddbg_m
 
 pub const enabled = markup_enabled and options.enabled;
 
+// shared allocator for doing formatting, only non existent when disabled at build
+const buffer_len = if (options.enabled) options.buffer_size else 0;
+var shared_buffer: [buffer_len]u8 = undefined;
+var fba = std.heap.FixedBufferAllocator.init(&shared_buffer);
+const salloc = fba.threadSafeAllocator();
+
 /// Equivalent of `raddbg_type_view(type, expr)`: tells the debugger how to visualize a type.
 /// `T` can be a zig type or a string pattern
 pub fn typeView(comptime T: anytype, comptime expr: []const u8) void {
@@ -49,17 +55,19 @@ pub fn threadId() std.Thread.Id {
 
 /// Equivalent of `raddbg_thread_name(fmt, ...)`: names the calling thread in the debugger
 pub fn threadName(comptime fmt: []const u8, args: anytype) void {
-    _ = fmt; // autofix
-    _ = args; // autofix
-    @panic("TODO: raddbg threadName");
+    threadIdName(threadId(), fmt, args);
 }
 
 /// Equivalent of `raddbg_thread_id_name(id, fmt, ...)`: names the thread with the given id in the debugger
 pub fn threadIdName(id: std.Thread.Id, comptime fmt: []const u8, args: anytype) void {
-    _ = id; // autofix
-    _ = fmt; // autofix
-    _ = args; // autofix
-    @panic("TODO: raddbg threadIdName");
+    if (!enabled) return;
+
+    // const name = salloc.printSentinel(fmt, args, 0) catch unreachable;
+    const name_buf = salloc.allocSentinel(u8, 511, 0) catch unreachable;
+    defer salloc.free(name_buf);
+    const name = std.mem.printSentinel(name_buf, fmt, args, 0) catch name_buf;
+
+    log("thread ({d}) wannts to be called: {s}", .{ id, name });
 }
 
 /// Equivalent of `raddbg_thread_color_u32(u32)`: colours the calling thread in the debugger, `0xRRGGBBAA`

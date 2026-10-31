@@ -5,9 +5,11 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const enabled = b.option(bool, "enabled", "when true raddb markup is written to the executable (default true)") orelse true;
+    const buffer_size = b.option(u32, "buffer", "size of the shared buffer used for formatting in kibibytes (default 1KiB)") orelse 1;
 
     const options = b.addOptions();
     options.addOption(bool, "enabled", enabled);
+    options.addOption(u32, "buffer_size", buffer_size * 1024 * 1024);
 
     const mod = b.addModule("raddbg", .{
         .root_source_file = b.path("markup.zig"),
