@@ -2,40 +2,31 @@ const std = @import("std");
 const raddbg = @import("raddbg");
 const Io = std.Io;
 
+const Stage = enum {
+    name,
+    colour,
+};
+
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
 
     std.debug.print("debugger is {s}\n", .{if (raddbg.isAttached()) "attached" else "not attached"});
 
-    // --- name
+    var gate: Gate = .{};
+    const threads = try spawnWorkers(stagedSelf, io, &gate);
+
     raddbg.log("--- thread name ---", .{});
-
     raddbg.threadName("main", .{});
+    gate.run(io, .name);
+    checkpoint();
 
-    {
-        var gate: Gate = .{};
-        const threads = try spawnWorkers(nameSelf, io, &gate);
-        gate.waitAll(io);
-        checkpoint();
-        gate.release(io);
-        joinAll(threads);
-    }
-
-    // --- colour
     raddbg.log("--- thread colour ---", .{});
-
     raddbg.threadColorRgba(1, 1, 1, 1);
+    gate.run(io, .colour);
+    checkpoint();
 
-    {
-        var gate: Gate = .{};
-        const threads = try spawnWorkers(colorSelf, io, &gate);
-        gate.waitAll(io);
-        checkpoint();
-        gate.release(io);
-        joinAll(threads);
-    }
-
-    // ---
+    gate.quit.set(io);
+    joinAll(threads);
 
     std.debug.print("done\n", .{});
 }
@@ -48,30 +39,19 @@ const worker_count = 4;
 
 const Gate = struct {
     ids: [worker_count]std.Thread.Id = undefined,
-    ready: [worker_count]Io.Event = @splat(.unset),
-    open: Io.Event = .unset,
+    go: std.EnumArray(Stage, Io.Event) = .initFill(.unset),
+    done: std.EnumArray(Stage, [worker_count]Io.Event) = .initFill(@splat(.unset)),
+    quit: Io.Event = .unset,
 
-    fn arrive(gate: *Gate, io: Io, index: usize) void {
-        gate.ids[index] = raddbg.threadId();
-        gate.ready[index].set(io);
-        gate.open.waitUncancelable(io);
-    }
-
-    fn waitAll(gate: *Gate, io: Io) void {
-        for (&gate.ready) |*event| event.waitUncancelable(io);
-    }
-
-    fn release(gate: *Gate, io: Io) void {
-        gate.open.set(io);
+    fn run(gate: *Gate, io: Io, stage: Stage) void {
+        gate.go.getPtr(stage).set(io);
+        for (gate.done.getPtr(stage)) |*event| event.waitUncancelable(io);
     }
 };
 
 fn spawnWorkers(comptime function: anytype, io: Io, gate: *Gate) ![worker_count]std.Thread {
     var threads: [worker_count]std.Thread = undefined;
-    for (&threads, 0..) |*thread, idx| {
-        gate.ready[idx].reset();
-        thread.* = try std.Thread.spawn(.{}, function, .{ io, gate, idx });
-    }
+    for (&threads, 0..) |*thread, idx| thread.* = try std.Thread.spawn(.{}, function, .{ io, gate, idx });
     return threads;
 }
 
@@ -81,7 +61,20 @@ fn joinAll(threads: [worker_count]std.Thread) void {
 
 // ---
 
-fn nameSelf(io: Io, gate: *Gate, index: usize) void {
+fn stagedSelf(io: Io, gate: *Gate, index: usize) void {
+    gate.ids[index] = raddbg.threadId();
+    for (std.enums.values(Stage)) |stage| {
+        gate.go.getPtr(stage).waitUncancelable(io);
+        switch (stage) {
+            .name => nameSelf(index),
+            .colour => colourSelf(index),
+        }
+        gate.done.getPtr(stage)[index].set(io);
+    }
+    gate.quit.waitUncancelable(io);
+}
+
+fn nameSelf(index: usize) void {
     switch (index) {
         // linux caps thread names at 15 bytes
         0 => raddbg.threadName("worker {d} with a name longer than fifteen bytes", .{index}),
@@ -99,11 +92,10 @@ fn nameSelf(io: Io, gate: *Gate, index: usize) void {
         },
         else => raddbg.threadName("worker {d}", .{index}),
     }
-    raddbg.log("worker {d} (id {d}) named itself\n", .{ index, raddbg.threadId() });
-    gate.arrive(io, index);
+    raddbg.log("worker {d} (id {d}) named itself", .{ index, raddbg.threadId() });
 }
 
-fn colorSelf(io: Io, gate: *Gate, index: usize) void {
+fn colourSelf(index: usize) void {
     const colours_u32 = [worker_count]u32{ 0xE06C75FF, 0x98C379FF, 0x61AFEFFF, 0xE5C07BFF };
     const colours_rgba = [worker_count][4]f32{
         .{ 1, 0.4, 0.4, 1 },
@@ -119,6 +111,5 @@ fn colorSelf(io: Io, gate: *Gate, index: usize) void {
         const c = colours_rgba[index];
         raddbg.threadColorRgba(c[0], c[1], c[2], c[3]);
     }
-    raddbg.log("worker {d} (id {d}) coloured itself\n", .{ index, raddbg.threadId() });
-    gate.arrive(io, index);
+    raddbg.log("worker {d} (id {d}) coloured itself", .{ index, raddbg.threadId() });
 }
