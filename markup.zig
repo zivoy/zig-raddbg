@@ -127,8 +127,11 @@ pub fn pin(comptime expr: []const u8, args: anytype) void {
 /// Equivalent of `raddbg_log(fmt, ...)`: writes to the debugger's log
 pub fn log(comptime fmt: []const u8, args: anytype) void {
     if (!enabled) return;
-    if (builtin.os.tag == .windows) @panic("TODO: need OutputDebugStringA");
-    std.log.scoped(.raddbg).info(fmt, args);
+    if (builtin.os.tag != .windows) return std.log.scoped(.raddbg).info(fmt, args);
+
+    var buf: [4096]u8 = undefined;
+    const msg = bufPrintTruncateZ(&buf, fmt, args);
+    win32.OutputDebugStringA(msg.ptr);
 }
 
 /// Which accesses of an address range stop the debugger.
@@ -266,6 +269,12 @@ fn bufPrintTruncateZ(buffer: []u8, comptime fmt: []const u8, args: anytype) [:0]
         break :blk buffer[0 .. buffer.len - 1 :0];
     };
 }
+
+// ---
+
+const win32 = if (builtin.os.tag == .windows and enabled) struct {
+    extern "kernel32" fn OutputDebugStringA(str: [*:0]const u8) callconv(.winapi) void;
+} else struct {};
 
 // ---
 
