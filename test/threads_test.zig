@@ -31,7 +31,7 @@ pub fn main(init: std.process.Init) !void {
     std.debug.print("done\n", .{});
 }
 
-fn checkpoint() void {
+inline fn checkpoint() void {
     raddbg.breakpointIf(raddbg.isAttached());
 }
 
