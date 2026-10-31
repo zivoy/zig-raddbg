@@ -88,8 +88,9 @@ This project is licensed under the [MIT License](./LICENSE).
 
 ## TODO
 
-- Finish the implementation, there are functions for things like setting thread name etc.
+- All functions are implemented, but due to limitations of RAD Debugger being alpha, most of the functions that interact with the debugger don't work on linux
+- complete test suite programs for functions that interact with the debugger
 - Look into making helpers for composing views, maybe comptime verification
-- verify this works on windows
+- verify this works on real windows, I developed the windows side using wine
 - some odd or large types do not display correctly (f16, f80, i128)
 - there is an issue where array is not getting the type when with an offset, this is an issue for MultiArrayList and it's helper `raddbg.std_views.multiArrayListOf` which right now is just showing the memory instead of using `array`
