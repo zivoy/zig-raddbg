@@ -140,7 +140,11 @@ pub fn log(comptime fmt: []const u8, args: anytype) void {
     if (!win32_enabled) return std.log.scoped(.raddbg).info(fmt, args);
 
     var buf: [4096]u8 = undefined;
-    const msg = bufPrintTruncateZ(&buf, fmt, args);
+    const msg = bufPrintTruncateZ(
+        &buf,
+        if (fmt[fmt.len - 1] == '\n') fmt else fmt ++ "\n",
+        args,
+    );
     win32.OutputDebugStringA(msg.ptr);
 }
 
