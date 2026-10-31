@@ -67,8 +67,22 @@ pub fn threadIdName(id: std.Thread.Id, comptime fmt: []const u8, args: anytype) 
             // kernel limit is 15 bytes + NUL
             std.Io.Dir.cwd().writeFile(io, .{ .sub_path = path, .data = name[0..@min(name.len, 15)] }) catch {};
         },
-        .windows => @panic("TODO: SetThreadDescription + 0x406D1388 exception"),
-        else => @compileError("Unsuported target"),
+        .windows => if (win32_enabled) {
+            // windows 10 style, only works on the calling thread
+            const set_description = if (id == threadId()) win32.setThreadDescription() else null;
+            if (set_description) |setDescription| {
+                // 512*u16 == 1024*u8
+                var name16: [512:0]u16 = undefined;
+
+                if (std.unicode.utf8ToUtf16Le(&name16, name)) |len| {
+                    name16[len] = 0;
+                    _ = setDescription(win32.GetCurrentThread(), name16[0..len :0]);
+                } else |_| {}
+            }
+            // every windows debugger understands this code, but nothing catches it without one
+            if (win32.IsDebuggerPresent() != 0) win32.raise(.thread_name, &.{ 0x1000, @intFromPtr(name.ptr), id });
+        },
+        else => {},
     }
 }
 
@@ -272,26 +286,56 @@ fn bufPrintTruncateZ(buffer: []u8, comptime fmt: []const u8, args: anytype) [:0]
 
 // ---
 
-const win32 = if (builtin.os.tag == .windows and enabled) struct {
-    pub const ExceptionCode = enum(DWORD) {
+const win32_enabled = builtin.os.tag == .windows and @sizeOf(usize) == @sizeOf(u64) and enabled;
+
+/// debug codes only for a present raddbg
+fn notifiable() bool {
+    return win32_enabled and isAttached();
+}
+
+const win32 = if (win32_enabled) struct {
+    const ExceptionCode = enum(DWORD) {
         thread_name = 0x406D1388,
         thread_color = 0x00524144,
         breakpoint = 0x00524145,
         annotate_vaddr_range = 0x00524156,
         load_module = 0x00524157,
-        _,
     };
 
     const DWORD = u32;
+    const BOOL = i32;
+    const HRESULT = i32;
+    const HANDLE = *anyopaque;
+    const HMODULE = *opaque {};
+    const LPCWSTR = [*:0]const u16;
+    const FARPROC = *const fn () callconv(.winapi) isize;
+
+    extern "kernel32" fn GetModuleHandleA(name: ?[*:0]const u8) callconv(.winapi) ?HMODULE;
+    extern "kernel32" fn GetProcAddress(module: HMODULE, name: [*:0]const u8) callconv(.winapi) ?FARPROC;
+    extern "kernel32" fn GetCurrentThread() callconv(.winapi) HANDLE;
+    extern "kernel32" fn IsDebuggerPresent() callconv(.winapi) BOOL;
     extern "kernel32" fn RaiseException(code: DWORD, flags: DWORD, nargs: DWORD, args: ?[*]const usize) callconv(.winapi) void;
     extern "kernel32" fn OutputDebugStringA(str: [*:0]const u8) callconv(.winapi) void;
 
-    // ---
+    const SetThreadDescriptionFn = *const fn (HANDLE, LPCWSTR) callconv(.winapi) HRESULT;
 
-    pub fn raise(code: ExceptionCode, info: anytype) void {
-        const T = @TypeOf(info.*);
-        comptime std.debug.assert(@sizeOf(T) % @sizeOf(usize) == 0);
-        RaiseException(@backingInt(code), 0, @sizeOf(T) / @sizeOf(usize), @ptrCast(@alignCast(info)));
+    const unresolved = 0;
+    const missing = 1;
+    var set_thread_description_cache: std.atomic.Value(usize) = .init(unresolved);
+
+    /// Windows 10 1607+: Resolved on first use, racing threads all compute the same value so none wait
+    fn setThreadDescription() ?SetThreadDescriptionFn {
+        var cached = set_thread_description_cache.load(.acquire);
+        if (cached == unresolved) {
+            const proc = if (GetModuleHandleA("kernel32.dll")) |module| GetProcAddress(module, "SetThreadDescription") else null;
+            cached = if (proc) |p| @intFromPtr(p) else missing;
+            set_thread_description_cache.store(cached, .release);
+        }
+        return if (cached == missing) null else @ptrFromInt(cached);
+    }
+
+    fn raise(code: ExceptionCode, params: []const usize) void {
+        RaiseException(@backingInt(code), 0, @intCast(params.len), params.ptr);
     }
 } else struct {};
 
