@@ -74,17 +74,12 @@ pub fn threadIdName(id: std.Thread.Id, comptime fmt: []const u8, args: anytype) 
 
 /// Equivalent of `raddbg_thread_color_u32(u32)`: colours the calling thread in the debugger, `0xRRGGBBAA`
 pub fn threadColorU32(rgba: u32) void {
-    _ = rgba; // autofix
-    @panic("TODO: raddbg threadColorU32");
+    threadIdColorU32(threadId(), rgba);
 }
 
 /// Equivalent of `raddbg_thread_color_rgba(r, g, b, a)`: colours the calling thread in the debugger, each channel is 0 to 1
 pub fn threadColorRgba(r: f32, g: f32, b: f32, a: f32) void {
-    _ = r; // autofix
-    _ = g; // autofix
-    _ = b; // autofix
-    _ = a; // autofix
-    @panic("TODO: raddbg threadColorRgba");
+    threadIdColorRgba(threadId(), r, g, b, a);
 }
 
 /// Equivalent of `raddbg_thread_id_color_u32(id, u32)`: colours the thread with the given id in the debugger, `0xRRGGBBAA`
